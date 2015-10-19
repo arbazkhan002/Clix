@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Clixar</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename="css/simple-sidebar.css")}}" rel="stylesheet">
+
+  <style>
+  .nav-pills a{
+    color:#b5b5b5;
+  }
+
+.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1px;
+  stroke-opacity: 0.6;
+}
+
+#licensing {
+  fill: green;
+}
+
+.link.licensing {
+  stroke: green;
+  stroke-opacity: 0.6;
+}
+
+.link.resolved {
+  stroke-dasharray: 0,2 1;
+}
+
+circle {
+  fill: #ccc;
+  stroke: #333;
+  stroke-width: 1.5px;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+.node:not(:hover) .nodetext {
+  display: none;
+}
+
+  </style>
+</head>
+<body>
+<link class="cssdeck" rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap-responsive.min.css" class="cssdeck">
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+              CLIXAR
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div id="wrapper">
+          <nav class="navbar navbar-default" style="height:60px; width:92%">
+            <div class="container-fluid">
+              <!-- Brand and toggle get grouped for better mobile display -->
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" aria-expanded="false">
+                  <span class="sr-only">Toggle navigation</span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">ANNOTATIONS</a>
+              </div>
+
+              <!-- Collect the nav links, forms, and other content for toggling -->
+              <div class="collapse navbar-collapse" style="margin-left:200px; margin-top:10px">
+               <form class="form-inline navbar-right" style="margin-right:10%" >
+                    <div class="input-group"> <span class="input-group-addon">Links</span>
+                    <select id="lunch" class="selectpicker form-control" data-live-search="true" title="Please select a lunch ...">
+                          <option>Count</option>
+                          <option>Response Time</option>
+                    </select>
+                    </div>
+              </form> 
+               <form class="form-inline" style="margin-left:30%">
+                    <div class="input-group"> <span class="input-group-addon">Nodes</span>
+                    <select id="lunch" class="selectpicker form-control" data-live-search="true" title="Please select a lunch ...">
+                          <option>Component Type</option>
+                          <option>Client ID</option>
+                    </select>
+                    </div>
+              </form> 
+              </div><!-- /.navbar-collapse -->
+            </div><!-- /.container-fluid -->
+          </nav>
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+          <div class="sidebar-container">
+              <div class="sidebar-nav navbar-default">
+                      <ul class="nav nav-list">
+                          <li><label class="tree-toggler nav-header">User Flows<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
+                              <ul class="nav nav-list tree" id="option-list">
+                                  <li><a href="#" onclick="return drawgraph()">Session by Session</a></li>
+                                  <li><a href="#">All Sessions</a></li>
+                              </ul>
+                          </li>
+                          <li class="divider"></li>
+                          <li><label class="tree-toggler nav-header">User Engagements<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
+                              <ul class="nav nav-list tree" id="option-list">
+                                  <li><a href="#" onclick="return drawchart()">Region View ID</a></li>
+                                  <li><a href="#">Component Type</a></li>
+                                  <li><a href="#">Client ID</a></li>
+                              </ul>
+                          </li>
+                      </ul>
+              </div>
+          </div>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div id="svg-container">
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+  <!-- Bootstrap Core JavaScript -->
+<!-- Latest compiled and minified JavaScript -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename="js/graph.js")}}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename="js/barchart.js")}}"></script>  
+  <script>
+    $(document).ready(function () {
+  
+    $('label.tree-toggler').click(function () {
+      $(this).parent().children('ul.tree').toggle(300);
+      $(this).children('span').toggleClass('glyphicon-menu-up glyphicon-menu-down');
+    });
+
+    drawgraph();  
+  });
+
+    
+     
+  </script
+</body>
