@@ -130,7 +130,7 @@ def jsonify_data(node_data, link_data):
     for field, group in node_data:
         data = {}
         data["name"] = field
-        data["group"] = clicknode.group_map[group]
+        data["group"] = group
         response["nodes"].append(data)
 
     for l in link_data:

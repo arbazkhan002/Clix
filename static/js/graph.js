@@ -16,7 +16,9 @@ function drawgraph() {
       .attr("width", width)
       .attr("height", height);
 
-  d3.json("http://10.159.167.118:5000/datagraph?link='COUNT'&node='COMPONENT_TYPE'", function(error, graph) {
+  var tooltip = Tooltip("vis-tooltip", 230)    
+
+  d3.json("http://10.151.100.204:5000/datagraph?link='COUNT'&node='COMPONENT_TYPE'", function(error, graph) {
     function linkArc(d) {
       var dx = d.target.x - d.source.x,
           dy = d.target.y - d.source.y,
@@ -68,14 +70,20 @@ function drawgraph() {
 
   circle.append("circle") 
       .attr("r", 6)
+      .style("stroke","#555")
+      .style("stroke-width", 1.0)
       .style("fill", function(d) { return color(d.group); });
 
+  /*    
   circle.append("svg:text")
       .attr("class", "nodetext")
       .attr("dx", 12)
       .attr("dy", ".35em")
       .text(function(d) { return d.name });
-
+  */
+  
+  circle.on("mouseover", nodeDetails)
+    .on("mouseout", hideDetails);
 
   var text = svg.append("g").selectAll("text")
       .data(force.nodes())
@@ -84,7 +92,21 @@ function drawgraph() {
       .attr("y", ".31em")
       .attr("class", "nodetext")
       .text(function(d) { return d.name; });
-      
+     
+  function nodeDetails(d,i) {
+    var content = '<p class="main">' + d.name + '</span></p>';
+    content += '<hr class="tooltip-hr">';
+    content += '<p class="extra">' + d.group + '</span></p>';
+    tooltip.showTooltip(content,d3.event,d.name.length>30||d.group.length>42?Math.max(d.name.length/30, d.group.length/42):1);
+    d3.select(this).select("circle").style("stroke","black")
+      .style("stroke-width", 2.0);
+   } 
+
+  function hideDetails(d,i){
+    tooltip.hideTooltip();
+    d3.select(this).select("circle").style("stroke","#555")
+      .style("stroke-width", 1.0);
+  }
 
   function linkArc(d) {
     var dx = d.target.x - d.source.x,

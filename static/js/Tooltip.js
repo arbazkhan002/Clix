@@ -8,14 +8,24 @@ function Tooltip(tooltipId, width){
 
   hideTooltip();
 
-  function showTooltip(content, event) {
+  function showTooltip(content, event, width_f) {
     $("#"+tooltipId).html(content);
+    $("#"+tooltipId).css({
+      'opacity':'1',
+      'display':'block',
+       'width':width*width_f
+      });
     $("#"+tooltipId).show();
 
     updatePosition(event);
   }
 
   function hideTooltip(){
+    $("#"+tooltipId).css({
+      'opacity':'0',
+      'display':'none',
+       'width':width
+      });  
     $("#"+tooltipId).hide();
   }
 
