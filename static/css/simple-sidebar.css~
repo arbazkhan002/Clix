@@ -91,7 +91,7 @@
   stroke: steelblue;
   stroke-width: 32px;
   stroke-linejoin: round;
-  opacity: 0.5;
+  opacity: 0.5
 }
 
 .x.axis text { 

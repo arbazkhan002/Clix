@@ -116,7 +116,7 @@ function drawchart() {
    function barDetails(d,i) {
      var content = '<p class="main">' + d.letter + '</span></p>';
      content += '<hr class="tooltip-hr">';
-     content += '<p class="extra">' + Number((d.frequency*100).toFixed(2)) + '<b>&#37</b></span></p>';
+     content += '<p class="extra">' + Number((d.frequency).toFixed(2))*100 + '<b>&#37</b></span></p>';
      tooltip.showTooltip(content,d3.event,d.letter.length>30?d.letter.length/30:1);
     } 
 

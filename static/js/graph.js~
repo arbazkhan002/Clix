@@ -35,8 +35,8 @@ function drawgraph() {
     }
 
  
-   var hull = svg.append("path")
-    .attr("class", "hull");    
+   var hull = svg.append("g")
+    .attr("id", "hullstructs");    
     
    force
         .nodes(graph.nodes)
