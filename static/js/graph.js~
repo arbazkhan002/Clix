@@ -12,24 +12,33 @@ function drawgraph() {
   d3.select("svg").remove();
   d3.select("#svg-container").select("label").remove();
   
+  var zoom = d3.behavior.zoom()
+      .scaleExtent([1, 10])
+      .on("zoom", zoomed);
+
   var svg = d3.select("#svg-container").append("svg")
       .attr("width", width)
-      .attr("height", height);
+      .attr("height", height)
+      .append("g")
+            .call(zoom);
+
+  var rect = svg.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .style("fill", "none")
+      .style("pointer-events", "all");            
+
+  svg = svg.append("g");          
+
+  var drag = d3.behavior.drag()
+      .origin(function(d) { return d; })
+      .on("dragstart", dragstarted)
+      .on("drag", dragged)
+      .on("dragend", dragended);
 
   var tooltip = Tooltip("vis-tooltip", 230)    
 
   d3.json("http://10.240.176.237:5000/datagraph?link='COUNT'&node='COMPONENT_TYPE'", function(error, graph) {
-    function linkArc(d) {
-      var dx = d.target.x - d.source.x,
-          dy = d.target.y - d.source.y,
-          dr = Math.sqrt(dx * dx + dy * dy);
-      return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-    }
-
-    function transform(d) {
-      return "translate(" + d.x + "," + d.y + ")";
-    }
-
     if (error) {
       return console.error(error);
     }
@@ -46,7 +55,7 @@ function drawgraph() {
 
   // Per-type markers, as they don't inherit styles.
   svg.append("defs").selectAll("marker")
-      .data(["licensing"])
+      .data(["licensing", "highlight"])
     .enter().append("marker")
       .attr("id", function(d) { return d; })
       .attr("viewBox", "0 -5 10 10")
@@ -54,27 +63,29 @@ function drawgraph() {
       .attr("refY", -1.5)
       .attr("markerWidth", 6)
       .attr("markerHeight", 6)
+      .attr("markerUnits","userSpaceOnUse")
       .attr("orient", "auto")
     .append("path")
       .attr("d", "M0,-5L10,0L0,5");
 
   var path = svg.append("g").selectAll("path")
-      .data(force.links())
+      .data(force.links().filter(function(d){return d.value>0}))
     .enter().append("path")
       .attr("class", function(d) { return "link licensing"; })
       .style("stroke-opacity", function(d) { return d.value==0?0:0.6; })
-      .style("stroke-width", function(d) { return d.value==0?0:'1px'; })    
+      .style("stroke-width", function(d) { return (d.value); })    
       .attr("marker-end", function(d) { return "url(#licensing)"; });
 
   var circle = svg.selectAll("g.node")
       .data(force.nodes())
     .enter().append("svg:g")
       .attr("class", "node")
-      .call(force.drag);
+      .call(drag);
+
 
   circle.append("circle") 
       .attr("r", 6)
-      .style("stroke","#555")
+      .style("stroke","#fff")
       .style("stroke-width", 1.0)
       .style("fill", function(d) { return color(d.group); });
 
@@ -82,19 +93,51 @@ function drawgraph() {
   circle.on("mouseover", nodeDetails)
     .on("mouseout", hideDetails);
 
+
+  var linkedByIndex = {};
+
+  graph.links.forEach(function(d) {
+                      if(d.value>0)
+                        linkedByIndex[d.source.index + "," + d.target.index] = 1;
+  });
+
+
+  function isConnected(a, b) {
+      return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index];
+  };
+
   function nodeDetails(d,i) {
     var content = '<p class="main">' + d.name + '</span></p>';
     content += '<hr class="tooltip-hr">';
     content += '<p class="extra">' + d.group + '</span></p>';
     tooltip.showTooltip(content,d3.event,d.name.length>30||d.group.length>42?Math.max(d.name.length/30, d.group.length/42):1);
-    d3.select(this).select("circle").style("stroke","black")
-      .style("stroke-width", 2.0);
+    d3.select(this).select("circle").style("stroke","#555")
+      .style("stroke-width", 1.5)
+      .transition()
+        .duration(750)
+        .attr("r", 9);
+
+    circle.filter(function(v){return isConnected(d,v);}).select("circle").style("stroke", "#555").style("stroke-width", 2);    
+    path.classed({'link-highlight':function(o) { console.log(o);
+                            return o.source === d || o.target === d ? true : false;
+                        },
+
+                     'licensing':function(o) { console.log(o);
+                            return o.source === d || o.target === d ? false : true;
+                        },   
+                    'link':true});   
    } 
 
   function hideDetails(d,i){
     tooltip.hideTooltip();
-    d3.select(this).select("circle").style("stroke","#555")
-      .style("stroke-width", 1.0);
+    d3.select(this).select("circle").style("stroke","#fff")
+      .style("stroke-width", 1.0)
+      .transition()
+        .duration(750)
+        .attr("r", 6);
+
+    circle.filter(function(v){return isConnected(d,v);}).select("circle").style("stroke", "#fff").style("stroke-width", 1);        
+    path.classed({"link-highlight":false, "link":true, "licensing":true});    
   }
 
   function linkArc(d) {
@@ -117,17 +160,53 @@ function drawgraph() {
       });
     }).entries(node_data);
   
-  return data;	
+  return data;  
   }    
+
+
+  function redrawHulls() {
+      hullData = makeHullData(circle.data());
+      validIndices = d3.range(hullData.length).filter(function(v){return (hullData[v].values).length>2;})
+      hullSelection = hull.selectAll("path")
+  .data(validIndices.map(function(i){return d3.geom.hull(hullData[i].values);}));
+
+      hullSelection.enter()
+          .append("path").attr("class", "hull");
+
+      hullSelection.attr("d", function(d) {
+              return "M" + d.join("L") + "Z";
+          });
+  }   
 
   force.on("tick", function() {
       path.attr("d", linkArc);
       circle.attr("transform", transform);
-      hullData = makeHullData(circle.data());
-      hull.datum(d3.geom.hull(hullData[1].values)).attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+      redrawHulls();
   });
+ });
 
-  });
+
+  function dragstarted(d) {
+    d3.event.sourceEvent.stopPropagation();
+    
+    d3.select(this).classed("dragging", true);
+    force.start();
+  }
+
+  function dragged(d) {
+    
+    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    
+  }
+
+  function dragended(d) {
+    
+    d3.select(this).classed("dragging", false);
+  }
+
+  function zoomed() {
+    svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  }
 
  return false;
 };

@@ -89,7 +89,7 @@
 .hull {
   fill: steelblue;
   stroke: steelblue;
-  stroke-width: 32px;
+  stroke-width: 12px;
   stroke-linejoin: round;
   opacity: 0.5;
 }
