@@ -1,5 +1,11 @@
 function drawchart() {
   //<label><input type="checkbox"> Sort values</label>
+  if (drawchart.chart !== undefined)
+	  console.log(drawchart.chart);
+  else {
+	drawchart.chart = "a";
+	console.log("drawchart.chart");
+  }
   var margin = {top: 20, right: 20, bottom: 30, left: 40},
       width = 1120 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom;
@@ -35,6 +41,8 @@ function drawchart() {
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   var tooltip = Tooltip("vis-tooltip", 230)
+
+  d3.select("#chart-list").selectAll("a").on("click", this.datachange);
 
   d3.json("http://10.240.176.237:5000/datachart", function(error, d) {
     var data = d.values;
@@ -81,7 +89,7 @@ function drawchart() {
 	.on("mouseout", hideDetails);
 
     d3.select("input").on("change", change);
-
+  
     var sortTimeout = setTimeout(function() {
       d3.select("input").property("checked", true).each(change);
     }, 2000);
@@ -124,5 +132,11 @@ function drawchart() {
      tooltip.hideTooltip();
    }
   });
+
+  this.datachange = function() {
+    console.log("clicked-.."); d3.event.stopPropagation();
+  }
+
+
   return false;
 }

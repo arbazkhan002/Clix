@@ -105,7 +105,7 @@ text {
               <div class="collapse navbar-collapse" style="margin-left:200px; margin-top:10px">
                <form class="form-inline navbar-right" style="margin-right:10%" >
                     <div class="input-group"> <span class="input-group-addon">Links</span>
-                    <select id="linktype" class="selectpicker form-control" data-live-search="true" title="Please select a linktype ...">
+                    <select id="linktype-select" class="selectpicker form-control" data-live-search="true" title="Please select a linktype ...">
                           <option>Count</option>
                           <option>Response Time</option>
                     </select>
@@ -113,7 +113,7 @@ text {
               </form> 
                <form class="form-inline" style="margin-left:30%">
                     <div class="input-group"> <span class="input-group-addon">Nodes</span>
-                    <select id="nodetype" class="selectpicker form-control" data-live-search="true" title="Please select a nodetype ...">
+                    <select id="nodetype-select" class="selectpicker form-control" data-live-search="true" title="Please select a nodetype ...">
                           <option>Component Type</option>
                           <option>Client ID</option>
                     </select>
@@ -128,14 +128,14 @@ text {
               <div class="sidebar-nav navbar-default">
                       <ul class="nav nav-list">
                           <li><label class="tree-toggler nav-header">User Flows<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
-                              <ul class="nav nav-list tree" id="option-list">
+                              <ul class="nav nav-list tree" id="flow-list">
                                   <li><a href="#" onclick="return drawgraph()">Session by Session</a></li>
                                   <li><a href="#">All Sessions</a></li>
                               </ul>
                           </li>
                           <li class="divider"></li>
                           <li><label class="tree-toggler nav-header">User Engagements<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
-                              <ul class="nav nav-list tree" id="option-list">
+                              <ul class="nav nav-list tree" id="chart-list">
                                   <li><a href="#" onclick="return drawchart()">Region View ID</a></li>
                                   <li><a href="#">Component Type</a></li>
                                   <li><a href="#">Client ID</a></li>

@@ -42,7 +42,7 @@ class linkwt:
     def __init__(self, src, dest):
         self.count = 1
         self.val = getattr(dest, self.name) 
-        self.length = 50
+        self.length = 80
 
 class countwt(linkwt):
     name = "count"
@@ -103,7 +103,7 @@ def make_links(nodes, field, link_type):
             
         last = node
 
-    return (node_map.keys(),link_map.values()) 
+    return (node_map,link_map) 
 
 
 # to put all elements of the same RVID together, create extra links of 0 weight between all nodes of the same RVID
@@ -131,9 +131,12 @@ def jsonify_data(node_data, link_data):
         data = {}
         data["name"] = field
         data["group"] = group
+        data["client_id"] = node_data[(field, group)].CLIENT_ID
+        data["action_type"] = node_data[(field, group)].ACTION_TYPE        
         response["nodes"].append(data)
 
-    for l in link_data:
+    for link in link_data:
+        l = link_data[link]
         data = {}
         data["source"] = l.source
         data["target"] = l.dest
