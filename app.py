@@ -17,7 +17,8 @@ with f as csvfile:
 
 @app.route('/datachart')
 def dataChart():
-	data_value = barcharts.histogram(lines)
+	field = request.args.get('field')
+	data_value = barcharts.histogram(lines, field)
 	total = sum(data_value[1])
 	responseData = []
 	for i,j in enumerate(data_value[1]):		

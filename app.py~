@@ -22,7 +22,7 @@ def dataChart():
 	responseData = []
 	for i,j in enumerate(data_value[1]):		
 		data = {}
-		data['letter'] = i
+		data['letter'] = data_value[0][i]
 		data['frequency'] = float(j)/total
 		responseData.append(data)
 

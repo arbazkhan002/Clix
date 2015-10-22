@@ -128,17 +128,17 @@ text {
               <div class="sidebar-nav navbar-default">
                       <ul class="nav nav-list">
                           <li><label class="tree-toggler nav-header">User Flows<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
-                              <ul class="nav nav-list tree" id="option-list">
+                              <ul class="nav nav-list tree" id="flow-list">
                                   <li><a href="#" onclick="return drawgraph()">Session by Session</a></li>
                                   <li><a href="#">All Sessions</a></li>
                               </ul>
                           </li>
                           <li class="divider"></li>
                           <li><label class="tree-toggler nav-header">User Engagements<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
-                              <ul class="nav nav-list tree" id="chart-list">
-                                  <li><a href="#" onclick="return drawchart()">Region View ID</a></li>
-                                  <li><a href="#">Component Type</a></li>
-                                  <li><a href="#">Client ID</a></li>
+				<ul class="nav nav-list tree" id="chart-list">
+                                  <li><a href="#" value="REGION_VIEW_ID">Region View ID</a></li>
+                                  <li><a href="#" value="COMPONENT_TYPE">Component Type</a></li>
+                                  <li><a href="#" value="CLIENT_ID">Client ID</a></li>
                               </ul>
                           </li>
                       </ul>

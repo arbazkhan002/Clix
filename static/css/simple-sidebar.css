@@ -86,6 +86,12 @@
     color: #fff;
 }
 
+
+#chart-list li a:hover {
+    background: #534BBD;
+    color: #fff;
+}
+
 .hull {
   fill: steelblue;
   stroke: steelblue;

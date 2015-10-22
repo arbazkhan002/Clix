@@ -1,9 +1,9 @@
 from collections import defaultdict
-def histogram(lines):	
+def histogram(lines, field):	
 	rvidDict = defaultdict(list)
 
 	for line in lines:
-	    rvidDict[line['REGION_VIEW_ID']].append(line)
+	    rvidDict[line[field]].append(line)
 
 	rvidmap = map(lambda x: [len(rvidDict[x]), x], rvidDict)
 
@@ -11,3 +11,5 @@ def histogram(lines):
 	xaxis = range(len(xlabels))
 	yaxis = map(lambda x: x[0], rvidmap[:50])
 	return (xlabels, yaxis)
+
+	
