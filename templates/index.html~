@@ -88,7 +88,7 @@ text {
       </nav>
 
       <div id="wrapper">
-          <nav class="navbar navbar-default" style="height:60px; width:92%">
+          <nav class="navbar navbar-default" style="height:auto; width:92%">
             <div class="container-fluid">
               <!-- Brand and toggle get grouped for better mobile display -->
               <div class="navbar-header">
@@ -98,27 +98,40 @@ text {
                   <span class="icon-bar"></span>
                   <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">ANNOTATIONS</a>
+                <a class="navbar-brand" href="#" style=" top: 50%;
+                                                        -webkit-transform: translateY(50%);
+                                                        -ms-transform: translateY(50%);
+                                                        transform: translateY(50%);">
+                  FILTERS
+                </a>
               </div>
 
               <!-- Collect the nav links, forms, and other content for toggling -->
               <div class="collapse navbar-collapse" style="margin-left:200px; margin-top:10px">
-               <form class="form-inline navbar-right" style="margin-right:10%" >
-                    <div class="input-group"> <span class="input-group-addon">Links</span>
-                    <select id="linktype-select" class="selectpicker form-control" data-live-search="true" title="Please select a linktype ...">
-                          <option>Count</option>
-                          <option>Response Time</option>
-                    </select>
-                    </div>
-              </form> 
-               <form class="form-inline" style="margin-left:30%">
-                    <div class="input-group"> <span class="input-group-addon">Nodes</span>
-                    <select id="nodetype-select" class="selectpicker form-control" data-live-search="true" title="Please select a nodetype ...">
-                          <option>Component Type</option>
-                          <option>Client ID</option>
-                    </select>
-                    </div>
-              </form> 
+                       <div class="row">
+                        <div class="col-md-4">
+                            <label>Environment</label>
+                             <select id="env-select" multiple="multiple">
+                                  <option value="cheese">Cheese</option>
+                                  <option value="tomatoes">Tomatoes</option>
+                                  <option value="mozarella">Mozzarella</option>
+                                  <option value="mushrooms">Mushrooms</option>
+                                  <option value="pepperoni">Pepperoni</option>
+                                  <option value="onions">Onions</option>
+                              </select>
+                       </div>
+                         <div class="row">
+                        <div class="col-md-4">
+                            <label>RVIDs</label>
+                             <select id="rvid-select" multiple="multiple">
+                                  <option value="cheese">Cheese</option>
+                                  <option value="tomatoes">Tomatoes</option>
+                                  <option value="mozarella">Mozzarella</option>
+                                  <option value="mushrooms">Mushrooms</option>
+                                  <option value="pepperoni">Pepperoni</option>
+                                  <option value="onions">Onions</option>
+                              </select>
+                       </div>  
               </div><!-- /.navbar-collapse -->
             </div><!-- /.container-fluid -->
           </nav>
@@ -129,7 +142,7 @@ text {
                       <ul class="nav nav-list">
                           <li><label class="tree-toggler nav-header">User Flows<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
                               <ul class="nav nav-list tree" id="flow-list">
-                                  <li><a href="#" onclick="return drawgraph()">Session by Session</a></li>
+                                  <li><a href="#" onclick="return drawgraphHelper()">Session by Session</a></li>
                                   <li><a href="#">All Sessions</a></li>
                               </ul>
                           </li>
@@ -158,10 +171,11 @@ text {
     <!-- /#wrapper -->
 
   <!-- Bootstrap Core JavaScript -->
-<!-- Latest compiled and minified JavaScript -->
+  <!-- Latest compiled and minified JavaScript -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename="js/libs/bootstrap-multiselect.js")}}"></script> 
   <script type="text/javascript" src="{{ url_for('static', filename="js/Tooltip.js")}}"></script>  
   <script type="text/javascript" src="{{ url_for('static', filename="js/sankey.js")}}"></script>    
   <script type="text/javascript" src="{{ url_for('static', filename="js/graph.js")}}"></script>
@@ -170,15 +184,173 @@ text {
   <script>
     $(document).ready(function () {
   
+    //collapsible side bar submenus
     $('label.tree-toggler').click(function () {
       $(this).parent().children('ul.tree').toggle(300);
       $(this).children('span').toggleClass('glyphicon-menu-up glyphicon-menu-down');
     });
 
-    drawgraph();  
+    //initialize the multiselect plugin 
+    $('select').multiselect({
+            buttonClass: 'btn btn-default',
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            maxHeight: 400,
+	    buttonWidth: '150px'           
+    });
+
+    $('select').multiselect('selectAll', false);
+    $('select').multiselect('updateButtonText');
+
+    var envgroups = [
+      {
+          label: 'Cloud', children: [
+              {label: 'AAA-Laser Technology', value: 'AAA-Laser Technology'},
+              {label: 'GPN Vinci', value: 'GPN Vinci'},
+              {label: 'HCLR Two Farms Inc.', value: 'HCLR Two Farms Inc.'}
+          ]
+      },
+      {
+          label: 'Rel 11', children: [
+              {label: 'REL11_ST9_Upgraded_CDRM', value: 'REL11_ST9_Upgraded_CDRM'},
+              {label: 'REL11_ST11_Upgraded_CDRM', value: 'REL11_ST11_Upgraded_CDRM'},
+              {label: 'REL11_ST12_Upgraded_CDRM', value: 'REL11_ST12_Upgraded_CDRM', selected: true}
+          ]
+      }
+    ];
+
+    var options = [
+{label:'/UnprocessedTxnCreationFlow/CreateTransaction', title:'/UnprocessedTxnCreationFlow/CreateTransaction', value: '/UnprocessedTxnCreationFlow/CreateTransaction', selected:true},
+{label:'/ReviewAndAdjustFlow/ReviewAndAdjust', title:'/ReviewAndAdjustFlow/ReviewAndAdjust', value: '/ReviewAndAdjustFlow/ReviewAndAdjust', selected:true},
+{label:'/AtkNotificationFlowTF/AtkNotificationPage', title:'/AtkNotificationFlowTF/AtkNotificationPage', value: '/AtkNotificationFlowTF/AtkNotificationPage', selected:true},
+{label:'/PjfProjectWorkareaRootFlow/PjfProjectWorkareaRootPage', title:'/PjfProjectWorkareaRootFlow/PjfProjectWorkareaRootPage', value: '/PjfProjectWorkareaRootFlow/PjfProjectWorkareaRootPage', selected:true},
+{label:'/ReviewUnprocessedTxnFlow/ReviewUnprocessedTxn', title:'/ReviewUnprocessedTxnFlow/ReviewUnprocessedTxn', value: '/ReviewUnprocessedTxnFlow/ReviewUnprocessedTxn', selected:true},
+{label:'/ProjectSearchFlow/ProjectSearch', title:'/ProjectSearchFlow/ProjectSearch', value: '/ProjectSearchFlow/ProjectSearch', selected:true},
+{label:'/ScheduleRequest-taskflow/ScheduleRequest', title:'/ScheduleRequest-taskflow/ScheduleRequest', value: '/ScheduleRequest-taskflow/ScheduleRequest', selected:true},
+{label:'/PjtManageProjectPlanFlow/ProjectPlanManage', title:'/PjtManageProjectPlanFlow/ProjectPlanManage', value: '/PjtManageProjectPlanFlow/ProjectPlanManage', selected:true},
+{label:'/AddProjectResourcesFlow/AddProjectResources', title:'/AddProjectResourcesFlow/AddProjectResources', value: '/AddProjectResourcesFlow/AddProjectResources', selected:true},
+{label:'/ManageBudgetsGraphFlow/ManageBudgetsGraphs', title:'/ManageBudgetsGraphFlow/ManageBudgetsGraphs', value: '/ManageBudgetsGraphFlow/ManageBudgetsGraphs', selected:true},
+{label:'/BudVerListFlow/BudVerList', title:'/BudVerListFlow/BudVerList', value: '/BudVerListFlow/BudVerList', selected:true},
+{label:'/TasksList/TasksList1', title:'/TasksList/TasksList1', value: '/TasksList/TasksList1', selected:true},
+{label:'', title:'', value: '', selected:true},
+{label:'/AssignmentDetailSearchFlow/AssignmentDetailSearch', title:'/AssignmentDetailSearchFlow/AssignmentDetailSearch', value: '/AssignmentDetailSearchFlow/AssignmentDetailSearch', selected:true},
+{label:'/TaskTreeFlow/TaskTree', title:'/TaskTreeFlow/TaskTree', value: '/TaskTreeFlow/TaskTree', selected:true},
+{label:'/ContextAreaFlow/ProjectManagerSOWA', title:'/ContextAreaFlow/ProjectManagerSOWA', value: '/ContextAreaFlow/ProjectManagerSOWA', selected:true},
+{label:'/PjtManageProjectPlanFlow/ProjectPlanManage1', title:'/PjtManageProjectPlanFlow/ProjectPlanManage1', value: '/PjtManageProjectPlanFlow/ProjectPlanManage1', selected:true},
+{label:'/ResourceScheduleFlow/ResourceSchedule', title:'/ResourceScheduleFlow/ResourceSchedule', value: '/ResourceScheduleFlow/ResourceSchedule', selected:true},
+{label:'/KeyPerfIndicatorFlow/CreateEditKeyPerfIndicator', title:'/KeyPerfIndicatorFlow/CreateEditKeyPerfIndicator', value: '/KeyPerfIndicatorFlow/CreateEditKeyPerfIndicator', selected:true},
+{label:'/ManageVersionDetailsFlow/MaintainVerisonMain', title:'/ManageVersionDetailsFlow/MaintainVerisonMain', value: '/ManageVersionDetailsFlow/MaintainVerisonMain', selected:true},
+{label:'/PlanLineFlow/planLine', title:'/PlanLineFlow/planLine', value: '/PlanLineFlow/planLine', selected:true},
+{label:'/PlanningOption/PlanningOptionPage', title:'/PlanningOption/PlanningOptionPage', value: '/PlanningOption/PlanningOptionPage', selected:true},
+{label:'/ResourceRequestFlow/ResourceRequestSearch', title:'/ResourceRequestFlow/ResourceRequestSearch', value: '/ResourceRequestFlow/ResourceRequestSearch', selected:true},
+{label:'/ExpItemDetailFlow/ExpItemDetail', title:'/ExpItemDetailFlow/ExpItemDetail', value: '/ExpItemDetailFlow/ExpItemDetail', selected:true},
+{label:'/SearchResultsFlow/SearchResults', title:'/SearchResultsFlow/SearchResults', value: '/SearchResultsFlow/SearchResults', selected:true},
+{label:'/MainArea/MainArea1', title:'/MainArea/MainArea1', value: '/MainArea/MainArea1', selected:true},
+{label:'/CreateProjectQEOverridesFlow/templateQEandOverrides', title:'/CreateProjectQEOverridesFlow/templateQEandOverrides', value: '/CreateProjectQEOverridesFlow/templateQEandOverrides', selected:true},
+{label:'/ProjectDefinitionTeamMemberFlow/ProjectDefinitionTeamMember', title:'/ProjectDefinitionTeamMemberFlow/ProjectDefinitionTeamMember', value: '/ProjectDefinitionTeamMemberFlow/ProjectDefinitionTeamMember', selected:true},
+{label:'/CreateIssueFlow/createIssue', title:'/CreateIssueFlow/createIssue', value: '/CreateIssueFlow/createIssue', selected:true},
+{label:'/InvoiceListFlow/ManageInvoice', title:'/InvoiceListFlow/ManageInvoice', value: '/InvoiceListFlow/ManageInvoice', selected:true},
+{label:'/FndFuseTabTF/FndMultiTabsPF', title:'/FndFuseTabTF/FndMultiTabsPF', value: '/FndFuseTabTF/FndMultiTabsPF', selected:true},
+{label:'/ResourceRequestDetailFlow/ResourceRequestDetail', title:'/ResourceRequestDetailFlow/ResourceRequestDetail', value: '/ResourceRequestDetailFlow/ResourceRequestDetail', selected:true},
+{label:'/MyIssuesFlow/myIssue', title:'/MyIssuesFlow/myIssue', value: '/MyIssuesFlow/myIssue', selected:true},
+{label:'/ManageRevenueDistributionMainTaskFlow1/ManageRevenueDistributionPageF', title:'/ManageRevenueDistributionMainTaskFlow1/ManageRevenueDistributionPageF', value: '/ManageRevenueDistributionMainTaskFlow1/ManageRevenueDistributionPageF', selected:true},
+{label:'/ProjectTemplateFlow/TemplateDetailsPage', title:'/ProjectTemplateFlow/TemplateDetailsPage', value: '/ProjectTemplateFlow/TemplateDetailsPage', selected:true},
+{label:'/CreateProjectDefinitionFlow/searchTemplate', title:'/CreateProjectDefinitionFlow/searchTemplate', value: '/CreateProjectDefinitionFlow/searchTemplate', selected:true},
+{label:'/SetupExecutionFromFuseFlow/SetupExecutionFromFuse', title:'/SetupExecutionFromFuseFlow/SetupExecutionFromFuse', value: '/SetupExecutionFromFuseFlow/SetupExecutionFromFuse', selected:true},
+{label:'/BurdenScheduleFlow/BurdenSchedule', title:'/BurdenScheduleFlow/BurdenSchedule', value: '/BurdenScheduleFlow/BurdenSchedule', selected:true},
+{label:'/ProjTxnControl-flow-definition/PjcTxnControl', title:'/ProjTxnControl-flow-definition/PjcTxnControl', value: '/ProjTxnControl-flow-definition/PjcTxnControl', selected:true},
+{label:'/ProjectTemplateFlow/CreateTemplateSearchTemplate', title:'/ProjectTemplateFlow/CreateTemplateSearchTemplate', value: '/ProjectTemplateFlow/CreateTemplateSearchTemplate', selected:true},
+{label:'/PlanVersionFlow/EditPlanLine', title:'/PlanVersionFlow/EditPlanLine', value: '/PlanVersionFlow/EditPlanLine', selected:true},
+{label:'/PrjEntResourceSearchFlow/PrjEntResourceSearch', title:'/PrjEntResourceSearchFlow/PrjEntResourceSearch', value: '/PrjEntResourceSearchFlow/PrjEntResourceSearch', selected:true},
+{label:'/CapitalProjectSearchFlow/CapitalProjectSearch', title:'/CapitalProjectSearchFlow/CapitalProjectSearch', value: '/CapitalProjectSearchFlow/CapitalProjectSearch', selected:true},
+{label:'/SearchIssueFlow/SearchIssue', title:'/SearchIssueFlow/SearchIssue', value: '/SearchIssueFlow/SearchIssue', selected:true},
+{label:'/ManageTaskAssociationFlow/ManageTaskAssociation', title:'/ManageTaskAssociationFlow/ManageTaskAssociation', value: '/ManageTaskAssociationFlow/ManageTaskAssociation', selected:true},
+{label:'/TaskDetailFlow/TaskDetail', title:'/TaskDetailFlow/TaskDetail', value: '/TaskDetailFlow/TaskDetail', selected:true},
+{label:'/PeriodSummary/PeriodDetailsPage', title:'/PeriodSummary/PeriodDetailsPage', value: '/PeriodSummary/PeriodDetailsPage', selected:true},
+{label:'/ProjectDefinitionMainFlow/ProjectDefinitionMain', title:'/ProjectDefinitionMainFlow/ProjectDefinitionMain', value: '/ProjectDefinitionMainFlow/ProjectDefinitionMain', selected:true},
+{label:'/ManageProjectUserTF/ManageProjectUser', title:'/ManageProjectUserTF/ManageProjectUser', value: '/ManageProjectUserTF/ManageProjectUser', selected:true},
+{label:'/BillingEventFlow/BillingEvent', title:'/BillingEventFlow/BillingEvent', value: '/BillingEventFlow/BillingEvent', selected:true},
+{label:'/QuickCreateProject/CollectProjectBasicInfo', title:'/QuickCreateProject/CollectProjectBasicInfo', value: '/QuickCreateProject/CollectProjectBasicInfo', selected:true},
+{label:'/ViewFundsResultsFlow/ViewFundsResults', title:'/ViewFundsResultsFlow/ViewFundsResults', value: '/ViewFundsResultsFlow/ViewFundsResults', selected:true},
+{label:'/HierarchyFlow/HierarchyView', title:'/HierarchyFlow/HierarchyView', value: '/HierarchyFlow/HierarchyView', selected:true},
+{label:'/ProjectAssetFlow/ProjectAsset', title:'/ProjectAssetFlow/ProjectAsset', value: '/ProjectAssetFlow/ProjectAsset', selected:true},
+{label:'/PeriodSummary/PeriodSummaryPage', title:'/PeriodSummary/PeriodSummaryPage', value: '/PeriodSummary/PeriodSummaryPage', selected:true},
+{label:'/AwardLandingWorkareaFlow/AwardLandingWorkarea', title:'/AwardLandingWorkareaFlow/AwardLandingWorkarea', value: '/AwardLandingWorkareaFlow/AwardLandingWorkarea', selected:true},
+{label:'/ViewPeriodsFlow/periods', title:'/ViewPeriodsFlow/periods', value: '/ViewPeriodsFlow/periods', selected:true},
+{label:'/GenerateRevenueParamFlow/defaultView', title:'/GenerateRevenueParamFlow/defaultView', value: '/GenerateRevenueParamFlow/defaultView', selected:true},
+{label:'/ManageProjectIntegrationFlow/ManageProjectIntegration', title:'/ManageProjectIntegrationFlow/ManageProjectIntegration', value: '/ManageProjectIntegrationFlow/ManageProjectIntegration', selected:true},
+{label:'/RateScheduleFlow/RateSchedule', title:'/RateScheduleFlow/RateSchedule', value: '/RateScheduleFlow/RateSchedule', selected:true},
+{label:'/ProjectBasicInformationFlow/ProjectBasicInformationPage', title:'/ProjectBasicInformationFlow/ProjectBasicInformationPage', value: '/ProjectBasicInformationFlow/ProjectBasicInformationPage', selected:true},
+{label:'/PlanTypeRateScheduleFlow/PlanTypeRateSchedule', title:'/PlanTypeRateScheduleFlow/PlanTypeRateSchedule', value: '/PlanTypeRateScheduleFlow/PlanTypeRateSchedule', selected:true},
+{label:'/ReviewCostDistFlow/ReviewCostDist', title:'/ReviewCostDistFlow/ReviewCostDist', value: '/ReviewCostDistFlow/ReviewCostDist', selected:true},
+{label:'/CopyExternalTasksFlow/CopyExternalTasks', title:'/CopyExternalTasksFlow/CopyExternalTasks', value: '/CopyExternalTasksFlow/CopyExternalTasks', selected:true},
+{label:'/IntegrationSetupFlow/IntegrationSetup', title:'/IntegrationSetupFlow/IntegrationSetup', value: '/IntegrationSetupFlow/IntegrationSetup', selected:true},
+{label:'/ViewAccountingFlow/ViewAccounting', title:'/ViewAccountingFlow/ViewAccounting', value: '/ViewAccountingFlow/ViewAccounting', selected:true},
+{label:'/InvoiceGenerationParamFlow/defaultView', title:'/InvoiceGenerationParamFlow/defaultView', value: '/InvoiceGenerationParamFlow/defaultView', selected:true},
+{label:'/ProjectAssetLineFlow/ProjectAssetLine', title:'/ProjectAssetLineFlow/ProjectAssetLine', value: '/ProjectAssetLineFlow/ProjectAssetLine', selected:true},
+{label:'/SearchEventFlow/SearchEvent', title:'/SearchEventFlow/SearchEvent', value: '/SearchEventFlow/SearchEvent', selected:true},
+{label:'/LandingPageFlow/LandingPage', title:'/LandingPageFlow/LandingPage', value: '/LandingPageFlow/LandingPage', selected:true},
+{label:'/AssignMultipleResources/AssignMultipleResourcesView', title:'/AssignMultipleResources/AssignMultipleResourcesView', value: '/AssignMultipleResources/AssignMultipleResourcesView', selected:true},
+{label:'/ProjectDefinitionCustomerOrganizationFlow/ProjectDefinitionCustomerOrganization', title:'/ProjectDefinitionCustomerOrganizationFlow/ProjectDefinitionCustomerOrganization', value: '/ProjectDefinitionCustomerOrganizationFlow/ProjectDefinitionCustomerOrganization', selected:true},
+{label:'/MyProjects_Front_TF/MyProjects_Front', title:'/MyProjects_Front_TF/MyProjects_Front', value: '/MyProjects_Front_TF/MyProjects_Front', selected:true},
+{label:'/PlanVersionFlow/ManagePlanVersion', title:'/PlanVersionFlow/ManagePlanVersion', value: '/PlanVersionFlow/ManagePlanVersion', selected:true},
+{label:'/CreateAwardFromTemplateFlow/CreateAwardFromTemplate', title:'/CreateAwardFromTemplateFlow/CreateAwardFromTemplate', value: '/CreateAwardFromTemplateFlow/CreateAwardFromTemplate', selected:true},
+{label:'/AtkGenericInfoletFlow/SingleInfoletPage', title:'/AtkGenericInfoletFlow/SingleInfoletPage', value: '/AtkGenericInfoletFlow/SingleInfoletPage', selected:true},
+{label:'/ProjCrossCharge-flow-definition/PrjCrossCharge', title:'/ProjCrossCharge-flow-definition/PrjCrossCharge', value: '/ProjCrossCharge-flow-definition/PrjCrossCharge', selected:true},
+{label:'/SummarizePlanTypesFlow/SummarizePlanTypes', title:'/SummarizePlanTypesFlow/SummarizePlanTypes', value: '/SummarizePlanTypesFlow/SummarizePlanTypes', selected:true},
+{label:'/ProjectAssetAssignmentFlow/ProjectAssetAssignment', title:'/ProjectAssetAssignmentFlow/ProjectAssetAssignment', value: '/ProjectAssetAssignmentFlow/ProjectAssetAssignment', selected:true},
+{label:'/MyProjectsFlow/MyProjects', title:'/MyProjectsFlow/MyProjects', value: '/MyProjectsFlow/MyProjects', selected:true},
+{label:'/ViewBurdenCostFlow/ViewBurdenCost1', title:'/ViewBurdenCostFlow/ViewBurdenCost1', value: '/ViewBurdenCostFlow/ViewBurdenCost1', selected:true},
+{label:'/CreateAssignmentFlow/ConfirmAssignment', title:'/CreateAssignmentFlow/ConfirmAssignment', value: '/CreateAssignmentFlow/ConfirmAssignment', selected:true},
+{label:'/KeyPerfIndicatorFlow/KeyPerfIndicator', title:'/KeyPerfIndicatorFlow/KeyPerfIndicator', value: '/KeyPerfIndicatorFlow/KeyPerfIndicator', selected:true},
+{label:'/AssetsReadyForUpdateFlow/AssetsReadyForUpdate', title:'/AssetsReadyForUpdateFlow/AssetsReadyForUpdate', value: '/AssetsReadyForUpdateFlow/AssetsReadyForUpdate', selected:true},
+{label:'/PlanTypeList/PlanTypeListPage', title:'/PlanTypeList/PlanTypeListPage', value: '/PlanTypeList/PlanTypeListPage', selected:true},
+{label:'/ProjectTemplateMainFlow/ProjectTemplateMain', title:'/ProjectTemplateMainFlow/ProjectTemplateMain', value: '/ProjectTemplateMainFlow/ProjectTemplateMain', selected:true},
+{label:'/KeyPerformanceIndicatorFlow/KeyPerformanceIndicator', title:'/KeyPerformanceIndicatorFlow/KeyPerformanceIndicator', value: '/KeyPerformanceIndicatorFlow/KeyPerformanceIndicator', selected:true},
+{label:'/ProjectHomeFlow/ProjectDetails', title:'/ProjectHomeFlow/ProjectDetails', value: '/ProjectHomeFlow/ProjectDetails', selected:true},
+{label:'/ProjectTemplateFlow/CreateTemplatePage', title:'/ProjectTemplateFlow/CreateTemplatePage', value: '/ProjectTemplateFlow/CreateTemplatePage', selected:true},
+{label:'/FndOverviewTF/FndFuseOverviewStripPF', title:'/FndOverviewTF/FndFuseOverviewStripPF', value: '/FndOverviewTF/FndFuseOverviewStripPF', selected:true},
+{label:'/ResourceRequestQualificationFlow/ResourceRequestQualification', title:'/ResourceRequestQualificationFlow/ResourceRequestQualification', value: '/ResourceRequestQualificationFlow/ResourceRequestQualification', selected:true},
+{label:'/TaskCrossCharge-flow-definition/taskCrossCharge', title:'/TaskCrossCharge-flow-definition/taskCrossCharge', value: '/TaskCrossCharge-flow-definition/taskCrossCharge', selected:true},
+{label:'/PlanTypeList/PlanType', title:'/PlanTypeList/PlanType', value: '/PlanTypeList/PlanType', selected:true},
+{label:'/ProcessingStatusSearchFlow/ProcessingStatusSearchView', title:'/ProcessingStatusSearchFlow/ProcessingStatusSearchView', value: '/ProcessingStatusSearchFlow/ProcessingStatusSearchView', selected:true},
+{label:'/SprintBurnDownTF/SprintBurnDown', title:'/SprintBurnDownTF/SprintBurnDown', value: '/SprintBurnDownTF/SprintBurnDown', selected:true},
+{label:'/ProjectManagerCreateRequestDialogFlow/ProjectManagerCreateRequestDialog', title:'/ProjectManagerCreateRequestDialogFlow/ProjectManagerCreateRequestDialog', value: '/ProjectManagerCreateRequestDialogFlow/ProjectManagerCreateRequestDialog', selected:true},
+{label:'/CapitalLandingFlow/CapitalLanding', title:'/CapitalLandingFlow/CapitalLanding', value: '/CapitalLandingFlow/CapitalLanding', selected:true},
+{label:'/ProjectListFlow/ProjectList', title:'/ProjectListFlow/ProjectList', value: '/ProjectListFlow/ProjectList', selected:true},
+{label:'/AwardSearchFlow/AwardSearch', title:'/AwardSearchFlow/AwardSearch', value: '/AwardSearchFlow/AwardSearch', selected:true},
+{label:'/CrossProjectEffortTaskFlow/CrossProjectEffort', title:'/CrossProjectEffortTaskFlow/CrossProjectEffort', value: '/CrossProjectEffortTaskFlow/CrossProjectEffort', selected:true},
+{label:'/InvoiceJobSubmitFlow/InvoiceJobResult', title:'/InvoiceJobSubmitFlow/InvoiceJobResult', value: '/InvoiceJobSubmitFlow/InvoiceJobResult', selected:true},
+{label:'/IssueAgingGraphFlow/IssueAgingGraph', title:'/IssueAgingGraphFlow/IssueAgingGraph', value: '/IssueAgingGraphFlow/IssueAgingGraph', selected:true},
+{label:'/ProjectPlanFlow/ProjectPlan', title:'/ProjectPlanFlow/ProjectPlan', value: '/ProjectPlanFlow/ProjectPlan', selected:true},
+{label:'/AwardSummaryFlow/AwardSummary', title:'/AwardSummaryFlow/AwardSummary', value: '/AwardSummaryFlow/AwardSummary', selected:true},
+{label:'/LPUnrelSubTaskFlow/LPUnrelSub', title:'/LPUnrelSubTaskFlow/LPUnrelSub', value: '/LPUnrelSubTaskFlow/LPUnrelSub', selected:true},
+{label:'/HzCpuiPartyPickerTF/HzCpuiPartyPicker', title:'/HzCpuiPartyPickerTF/HzCpuiPartyPicker', value: '/HzCpuiPartyPickerTF/HzCpuiPartyPicker', selected:true},
+{label:'/ReviewFinalize-task-flow-definition/ReviewFinalize', title:'/ReviewFinalize-task-flow-definition/ReviewFinalize', value: '/ReviewFinalize-task-flow-definition/ReviewFinalize', selected:true},
+{label:'/AtkFuseWelcomeTF/AtkFuseWelcomePage', title:'/AtkFuseWelcomeTF/AtkFuseWelcomePage', value: '/AtkFuseWelcomeTF/AtkFuseWelcomePage', selected:true},
+{label:'/PlanVersionFlow/ReviewPlan', title:'/PlanVersionFlow/ReviewPlan', value: '/PlanVersionFlow/ReviewPlan', selected:true},
+{label:'/ManageAwardFlow/editAwardDetail', title:'/ManageAwardFlow/editAwardDetail', value: '/ManageAwardFlow/editAwardDetail', selected:true},
+{label:'/ManageProjectListFlow/ProjectListOverview', title:'/ManageProjectListFlow/ProjectListOverview', value: '/ManageProjectListFlow/ProjectListOverview', selected:true},
+{label:'/AtkInfoletFlow/InfoletMainPage', title:'/AtkInfoletFlow/InfoletMainPage', value: '/AtkInfoletFlow/InfoletMainPage', selected:true},
+{label:'/CopyFinancialPlansFlow/view1', title:'/CopyFinancialPlansFlow/view1', value: '/CopyFinancialPlansFlow/view1', selected:true},
+{label:'/LPAdjExcpTaskFlow/LPAdjExcp', title:'/LPAdjExcpTaskFlow/LPAdjExcp', value: '/LPAdjExcpTaskFlow/LPAdjExcp', selected:true},
+{label:'/TeamMemberFlow/TeamMember', title:'/TeamMemberFlow/TeamMember', value: '/TeamMemberFlow/TeamMember', selected:true},
+{label:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', title:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', value: '/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', selected:true}
+    ];
+
+    $('#rvid-select').multiselect('dataprovider', options);    
+    $('#env-select').multiselect('dataprovider', envgroups);
+
+
+    drawgraph(); 
+    d3.select("#chart-list").selectAll("a").on("click", function() {drawchart(d3.select(this).attr("value"));});    
   });
 
-    
+   function drawgraphHelper(){
+	delete drawchart.chart;
+	drawgraph();
+	return false; //override default behavior
+   }
      
   </script
 </body>

@@ -81,10 +81,24 @@
     color: #534BBD;
 }
 
-#option-list li a:hover {
-    background: #534BBD;
+#flow-list li a:hover {
+    background-color: #534BBD;
     color: #fff;
 }
+
+#flow-list li a:focus	 {
+    background-color: rgba(134, 128, 128, 0.5);
+}
+
+#chart-list li a:hover {
+    background-color: #534BBD;
+    color: #fff;
+}
+
+#chart-list li a:focus	 {
+    background-color: rgba(134, 128, 128, 0.5);
+}
+
 
 .hull {
   fill: steelblue;
