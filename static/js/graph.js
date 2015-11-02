@@ -193,7 +193,9 @@ function drawgraph() {
 
 
   function redrawHulls() {
-      hullData = makeHullData(circle.data());
+      hullData = makeHullData(circle.filter(function(d){ return d3.select(this).style("visibility")!="hidden";}).data());
+      
+      // groups of size atleast 3 would be enclosed under a hull
       validIndices = d3.range(hullData.length).filter(function(v){return (hullData[v].values).length>2;})
       hullSelection = hull.selectAll("path")
 						.data(validIndices.map(function(i){return d3.geom.hull(hullData[i].values);}));
@@ -208,9 +210,7 @@ function drawgraph() {
   }   
   
   function clearHulls() {
-	
-	  hull.selectAll("path").transition().remove();
-	  console.log("entered5");
+	  hull.selectAll("path").remove();
   }
   
   window.dispatch.on("filterChange", function(context, filters) {
@@ -220,7 +220,7 @@ function drawgraph() {
 		  return d.prop.REGION_VIEW_ID in filters["rvid-filter"];
 	  }
 
-	  graph.links = graph.links.filter(function(d){
+	  path.attr("visibility", function(d){
 		  /*
 		  for (var f in filter) {
 			field = window.fieldmap.get(f);
@@ -229,23 +229,10 @@ function drawgraph() {
 		  }
 ;		  return true;
 		  */
-		  return !((filterCondition(d.source)) || (filterCondition(d.target)));
-		});		
+		  return (filterCondition(d.source)) || (filterCondition(d.target)) ? "hidden":"visible";});	
 	
-	  var context = {};
-	  context.offsets = {};
-	  context.count = 0;
 	  
-	  //sort based on index
-	  graph.nodes.sort(function(a,b){return a.index-b.index;})
-	  
-	  for(var i=0; i<graph.nodes.length; i++) {
-		var d = graph.nodes[i];
-		context.count = (filterCondition(d))? context.count+1 : context.count;
-		context.offsets[d.index] = context.count;
-	  }
-	  
-	  graph.nodes = graph.nodes.filter(function(d){
+	  circle.attr("visibility", function(d){
 		  /*
 		  for (var f in filter) {
 			field = window.fieldmap.get(f);
@@ -254,32 +241,8 @@ function drawgraph() {
 		  }
 ;		  return true;
 		  */
-		  return !(filterCondition(d));
-		});
+		  return filterCondition(d) ? "hidden":"visible";});
 	
-	
-	 graph.links = graph.links.map(function(d) {
-		console.log(!((filterCondition(d.source)) || (filterCondition(d.target))));
-		d.source = d.source.index - context.offsets[d.source.index];
-		d.target = d.target.index - context.offsets[d.target.index];
-		return d;
-	 });
-	 
-	  graph.links.forEach(function(link, index, list) {
-        if (typeof graph.nodes[link.source] === 'undefined') {
-            console.log('undefined source', link);
-        }
-        if (typeof graph.nodes[link.target] === 'undefined') {
-            console.log('undefined target', link);
-        }
-		});
-
- 	 // console.log(graph);
-	
-	 force.nodes(graph.nodes)
-		.links(graph.links);
-		
-	 startFlow();
 	 clearHulls();
 	 redrawHulls();
   });
