@@ -82,7 +82,7 @@
 }
 
 #flow-list li a:hover {
-    background-color: #534BBD;
+    background-image: linear-gradient(to bottom,#08c,#0077b3);
     color: #fff;
 }
 
@@ -91,7 +91,7 @@
 }
 
 #chart-list li a:hover {
-    background-color: #534BBD;
+    background-image: linear-gradient(to bottom,#08c,#0077b3);
     color: #fff;
 }
 

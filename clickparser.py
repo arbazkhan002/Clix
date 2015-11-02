@@ -131,8 +131,7 @@ def jsonify_data(node_data, link_data):
         data = {}
         data["name"] = field
         data["group"] = group
-        data["client_id"] = node_data[(field, group)].CLIENT_ID
-        data["action_type"] = node_data[(field, group)].ACTION_TYPE        
+        data["prop"] = node_data[(field, group)].__dict__
         response["nodes"].append(data)
 
     for link in link_data:

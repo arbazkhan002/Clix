@@ -36,9 +36,10 @@ function drawgraph() {
       .on("drag", dragged)
       .on("dragend", dragended);
 
-  var tooltip = Tooltip("vis-tooltip", 230)    
-
-  d3.json("http://10.240.176.237:5000/datagraph?link='COUNT'&node='COMPONENT_TYPE'", function(error, graph) {
+  var tooltip = Tooltip("vis-tooltip", 230);
+  
+  d3.json("http://10.240.176.237:5000/datagraph?link=COUNT&node=COMPONENT_TYPE", function(error, graph) {
+	
     if (error) {
       return console.error(error);
     }
@@ -50,8 +51,7 @@ function drawgraph() {
    force
         .nodes(graph.nodes)
         .links(graph.links)
-        .linkDistance(function(link, index) { return link.len;})
-        .start();
+        .linkDistance(function(link, index) { return link.len;});
 
   // Per-type markers, as they don't inherit styles.
   svg.append("defs").selectAll("marker")
@@ -68,31 +68,11 @@ function drawgraph() {
     .append("path")
       .attr("d", "M0,-5L10,0L0,5");
 
-  var path = svg.append("g").selectAll("path")
-      .data(force.links().filter(function(d){return d.value>0;}))
-    .enter().append("path")
-      .attr("class", function(d) { return "link licensing"; })
-      .style("stroke-opacity", function(d) { return d.value==0?0:0.6; })
-      .style("stroke-width", function(d) { return (d.value); })    
-      .attr("marker-end", function(d) { return "url(#licensing)"; });
+  var path = svg.append("g").selectAll("path");
 
-  var circle = svg.selectAll("g.node")
-      .data(force.nodes())
-    .enter().append("svg:g")
-      .attr("class", "node")
-      .call(drag);
+  var circle = svg.selectAll("g.node");
 
-
-  circle.append("circle") 
-      .attr("r", 6)
-      .style("stroke","#fff")
-      .style("stroke-width", 1.0)
-      .style("fill", function(d) { return color(d.group); });
-
-  
-  circle.on("mouseover", nodeDetails)
-    .on("mouseout", hideDetails);
-
+  startFlow();
 
   var linkedByIndex = {};
 
@@ -101,16 +81,61 @@ function drawgraph() {
                         linkedByIndex[d.source.index + "," + d.target.index] = 1;
   });
 
+  d3.select('input').on("change", function() {
+		console.log("changed");
+                alert('Changed option ' + this + '.');
+            });
+  
+  function startFlow() {
+	path = path.data(force.links().filter(function(d){return d.value>0;}), function(d) { return d.source + "-" + d.target; });
+      
+	path.enter().append("path")
+      .attr("class", function(d) { return "link licensing"; })
+      .style("stroke-opacity", function(d) { return d.value==0?0:0.6; })
+      .style("stroke-width", function(d) { return (d.value); })    
+      .attr("marker-end", function(d) { return "url(#licensing)"; });
+    
+    path.exit().transition().remove();   
 
+	console.log("entered2");
+	circle = circle.data(force.nodes(), function(d){return d.prop.id;});
+	  
+	circle.enter().append("svg:g")
+	  .attr("class", "node")
+	  .call(drag)
+	  .append("circle") 
+	  .attr("r", 6)
+	  .style("stroke","#fff")
+	  .style("stroke-width", 1.0)
+	  .style("fill", function(d) { return color(d.group); });
+	
+	circle.exit().transition().remove();  
+
+	circle.on("mouseover", nodeDetails)
+	.on("mouseout", hideDetails);    
+	console.log("entered1");
+	force.on("tick", function() {
+		  path.attr("d", linkArc);
+		  circle.attr("transform", transform);
+		  redrawHulls();})
+	  .start();  
+      
+  }
+
+  // check whether two nodes are connected
   function isConnected(a, b) {
       return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index];
   };
 
+  // dynamically create a tooltip window on the element clicked
   function nodeDetails(d,i) {
     var content = '<p class="main">' + d.name + '</span></p>';
     content += '<hr class="tooltip-hr">';
     content += '<p class="extra">' + d.group + '</span></p>';
+    
+    // dynamically size the tooltip width based on the text inside (group name and component name)
     tooltip.showTooltip(content,d3.event,d.name.length>30||d.group.length>42?Math.max(d.name.length/30, d.group.length/42):1);
+    
     d3.select(this).select("circle").style("stroke","#555")
       .style("stroke-width", 1.5)
       .transition()
@@ -118,11 +143,11 @@ function drawgraph() {
         .attr("r", 9);
 
     circle.filter(function(v){return isConnected(d,v);}).select("circle").style("stroke", "#555").style("stroke-width", 2);    
-    path.classed({'link-highlight':function(o) { console.log(o);
+    path.classed({'link-highlight':function(o) { 
                             return o.source === d || o.target === d ? true : false;
                         },
 
-                     'licensing':function(o) { console.log(o);
+                     'licensing':function(o) { 
                             return o.source === d || o.target === d ? false : true;
                         },   
                     'link':true});   
@@ -151,6 +176,9 @@ function drawgraph() {
     return "translate(" + d.x + "," + d.y + ")";
   }
 
+   // split the data based on groups
+   // split into groups based on key function and,
+   // map each element inside a group into a geometric point based on its geometry (a tuple of its x and y coordinates)
   function makeHullData(node_data) {
    var data = d3.nest()
     .key(function(d) { return d.group;})
@@ -160,7 +188,7 @@ function drawgraph() {
       });
     }).entries(node_data);
   
-  return data;  
+   return data;  
   }    
 
 
@@ -168,7 +196,7 @@ function drawgraph() {
       hullData = makeHullData(circle.data());
       validIndices = d3.range(hullData.length).filter(function(v){return (hullData[v].values).length>2;})
       hullSelection = hull.selectAll("path")
-  .data(validIndices.map(function(i){return d3.geom.hull(hullData[i].values);}));
+						.data(validIndices.map(function(i){return d3.geom.hull(hullData[i].values);}));
 
       hullSelection.enter()
           .append("path").attr("class", "hull");
@@ -176,13 +204,86 @@ function drawgraph() {
       hullSelection.attr("d", function(d) {
               return "M" + d.join("L") + "Z";
           });
-  }   
 
-  force.on("tick", function() {
-      path.attr("d", linkArc);
-      circle.attr("transform", transform);
-      redrawHulls();
+  }   
+  
+  function clearHulls() {
+	
+	  hull.selectAll("path").transition().remove();
+	  console.log("entered5");
+  }
+  
+  window.dispatch.on("filterChange", function(context, filters) {
+	  console.log(filters);
+	  
+	  function filterCondition(d) {
+		  return d.prop.REGION_VIEW_ID in filters["rvid-filter"];
+	  }
+
+	  graph.links = graph.links.filter(function(d){
+		  /*
+		  for (var f in filter) {
+			field = window.fieldmap.get(f);
+			if (d.prop.field in filter[f])
+				return false;
+		  }
+;		  return true;
+		  */
+		  return !((filterCondition(d.source)) || (filterCondition(d.target)));
+		});		
+	
+	  var context = {};
+	  context.offsets = {};
+	  context.count = 0;
+	  
+	  //sort based on index
+	  graph.nodes.sort(function(a,b){return a.index-b.index;})
+	  
+	  for(var i=0; i<graph.nodes.length; i++) {
+		var d = graph.nodes[i];
+		context.count = (filterCondition(d))? context.count+1 : context.count;
+		context.offsets[d.index] = context.count;
+	  }
+	  
+	  graph.nodes = graph.nodes.filter(function(d){
+		  /*
+		  for (var f in filter) {
+			field = window.fieldmap.get(f);
+			if (d.prop.field in filter[f])
+				return false;
+		  }
+;		  return true;
+		  */
+		  return !(filterCondition(d));
+		});
+	
+	
+	 graph.links = graph.links.map(function(d) {
+		console.log(!((filterCondition(d.source)) || (filterCondition(d.target))));
+		d.source = d.source.index - context.offsets[d.source.index];
+		d.target = d.target.index - context.offsets[d.target.index];
+		return d;
+	 });
+	 
+	  graph.links.forEach(function(link, index, list) {
+        if (typeof graph.nodes[link.source] === 'undefined') {
+            console.log('undefined source', link);
+        }
+        if (typeof graph.nodes[link.target] === 'undefined') {
+            console.log('undefined target', link);
+        }
+		});
+
+ 	 // console.log(graph);
+	
+	 force.nodes(graph.nodes)
+		.links(graph.links);
+		
+	 startFlow();
+	 clearHulls();
+	 redrawHulls();
   });
+
  });
 
 
@@ -207,6 +308,6 @@ function drawgraph() {
   function zoomed() {
     svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
   }
-
+  
  return false;
 };

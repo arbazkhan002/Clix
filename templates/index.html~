@@ -193,7 +193,9 @@ text {
     //initialize the multiselect plugin 
     $('select').multiselect({
             buttonClass: 'btn btn-default',
+	    enableClickableOptGroups: true,
             enableFiltering: true,
+	    enableCaseInsensitiveFiltering: true,
             includeSelectAllOption: true,
             maxHeight: 400,
 	    buttonWidth: '150px'           
@@ -219,7 +221,7 @@ text {
       }
     ];
 
-    var options = [
+    var rvidlist = [
 {label:'/UnprocessedTxnCreationFlow/CreateTransaction', title:'/UnprocessedTxnCreationFlow/CreateTransaction', value: '/UnprocessedTxnCreationFlow/CreateTransaction', selected:true},
 {label:'/ReviewAndAdjustFlow/ReviewAndAdjust', title:'/ReviewAndAdjustFlow/ReviewAndAdjust', value: '/ReviewAndAdjustFlow/ReviewAndAdjust', selected:true},
 {label:'/AtkNotificationFlowTF/AtkNotificationPage', title:'/AtkNotificationFlowTF/AtkNotificationPage', value: '/AtkNotificationFlowTF/AtkNotificationPage', selected:true},
@@ -338,7 +340,7 @@ text {
 {label:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', title:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', value: '/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', selected:true}
     ];
 
-    $('#rvid-select').multiselect('dataprovider', options);    
+    $('#rvid-select').multiselect('dataprovider', rvidlist);    
     $('#env-select').multiselect('dataprovider', envgroups);
 
 

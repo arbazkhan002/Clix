@@ -15,6 +15,8 @@ with f as csvfile:
     for row in linereader:
         lines.append(row)
 
+click_graph = clickparser.parse(lines)
+
 @app.route('/datachart')
 def dataChart():
 	field = request.args.get('field')
@@ -38,14 +40,13 @@ def dataGraph():
 	node = request.args.get('node')
 	link = request.args.get('link')
 
-	click_graph = clickparser.parse(lines)
 
 	jsondata = json.dumps(click_graph, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
 	#print jsondata[:1000]
 
 	link_type = clickparser.countwt
-	l = clickparser.make_links(click_graph["nodes"], "COMPONENT_TYPE", link_type)
+	l = clickparser.make_links(click_graph["nodes"], node, link_type)
 	#print len(l[1]), len(click_graph["nodes"])
 	response_data = clickparser.jsonify_data(l[0], l[1])
 	clickparser.converge_rvid_nodes(response_data)
