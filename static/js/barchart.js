@@ -34,9 +34,11 @@ function drawchart(elementId) {
   // remove any old svg
   d3.select("svg").remove();
   d3.select("#svg-container").select("label").remove();
-  var checkbox = d3.select("#svg-container").append("label");
-  checkbox.append("input").attr("type", "checkbox");
-  checkbox.append("text").text("Sort Chart");
+  drawchart.chart.checkbox = d3.select("#svg-container").append("label");
+  drawchart.chart.checkbox.append("input")
+	.attr("id", "sort-check")
+	.attr("type", "checkbox");
+  drawchart.chart.checkbox.append("text").text("Sort Chart");
 
   drawchart.chart.svg = d3.select("#svg-container").append("svg")
       .attr("width", drawchart.chart.width + margin.left + margin.right)
@@ -47,7 +49,7 @@ function drawchart(elementId) {
   datachange(elementId);
 
   function datachange(elementId) {
-    console.log("clicked-.."); d3.event.stopPropagation();
+    d3.event.stopPropagation();
     d3.json("http://10.240.176.237:5000/datachart?field="+elementId, function(error, d) {
         var data = d.values;
         data.forEach(function(d) {
@@ -79,22 +81,23 @@ function drawchart(elementId) {
 
         bar.enter().append("rect")
             .attr("class", "bar")
-            .attr("x", function(d) { return drawchart.chart.x(d.letter); })
-            .attr("width", drawchart.chart.x.rangeBand());
-        
+            
         bar.exit().remove();  
 
         bar.transition().duration(750)
+			.attr("x", function(d) { return drawchart.chart.x(d.letter); })
+            .attr("width", drawchart.chart.x.rangeBand())
             .attr("y", function(d) { return drawchart.chart.y(d.frequency); })
             .attr("height", function(d) { return drawchart.chart.height - drawchart.chart.y(d.frequency); })
 
         bar.on("mouseover", barDetails)
           .on("mouseout", hideDetails);
 
-        d3.select("input").on("change", change);
 
+		d3.select("#sort-check").property("checked", false)
+		.on("change", change);
+		
         function change() {
-
           // Copy-on-write since tweens are evaluated after a delay.
           var x0 = drawchart.chart.x.domain(data.sort(this.checked
               ? function(a, b) { return b.frequency - a.frequency; }
@@ -106,7 +109,7 @@ function drawchart(elementId) {
               .sort(function(a, b) { return x0(a.letter) - x0(b.letter); });
 
           var transition = drawchart.chart.svg.transition().duration(750),
-              delay = function(d, i) { return i * 50; };
+              delay = function(d, i) { return i * 5; };
 
           transition.selectAll(".bar")
               .delay(delay)

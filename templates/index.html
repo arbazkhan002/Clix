@@ -109,16 +109,21 @@
               <!-- Collect the nav links, forms, and other content for toggling -->
               <div class="collapse navbar-collapse" style="margin-left:200px; margin-top:10px">
                        <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label>Environment</label>
                              <select id="env-filter" multiple="multiple" style="display:none">
                               </select>
-                       </div>
-                         <div class="row">
-                        <div class="col-md-4">
+                        </div>
+                        <div class="col-md-3">
                             <label>RVIDs</label>
                              <select id="rvid-filter" multiple="multiple" style="display:none">
                               </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Component Types</label>
+                             <select id="ctype-filter" multiple="multiple" style="display:none">
+                              </select>
+                        </div>
                        </div>  
               </div><!-- /.navbar-collapse -->
             </div><!-- /.container-fluid -->
@@ -135,7 +140,7 @@
                               </ul>
                           </li>
                           <li class="divider"></li>
-                          <li><label class="tree-toggler nav-header">User Engagements<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
+                          <li><label class="tree-toggler nav-header"><b>User Engagements</b><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
 				<ul class="nav nav-list tree" id="chart-list">
                                   <li><a href="#" value="REGION_VIEW_ID">Region View ID</a></li>
                                   <li><a href="#" value="COMPONENT_TYPE">Component Type</a></li>
@@ -180,6 +185,7 @@
 	filters = {};
 	var m = d3.map();
 	m.set("rvid-filter", "REGION_VIEW_ID");
+	m.set("ctype-filter", "COMPONENT_TYPE");	
 	window.fieldmap = m;
 	
 	function addFilter(f, x, context) {
@@ -213,10 +219,13 @@
 		enableFiltering: true,
 	    enableCaseInsensitiveFiltering: true,
 		includeSelectAllOption: true,
-		maxHeight: 400,
+		maxHeight: 200,
 	    buttonWidth: '150px',
+	    buttonTitle: function(o, e){
+			return 'Dropdown-Filter';
+		},
 	    onChange: function(element, checked) {
-                var parentId = $(element[0].parentElement).attr('id');
+                var parentId = $(element[0]).closest("select").attr('id');
                 var f = checked ? clearFilter : addFilter;
                 f(parentId,element.val(), this);
             }	             
@@ -360,8 +369,44 @@
 		{label:'/TeamMemberFlow/TeamMember', title:'/TeamMemberFlow/TeamMember', value: '/TeamMemberFlow/TeamMember', selected:true},
 		{label:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', title:'/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', value: '/AddEditKeyPerformanceIndicatorFlow/AddEditKeyPerformanceIndicator', selected:true}
     ];
+    
+    var ctypelist = [
+		{label:'oracle.adf.RichInputComboboxListOfValues', title:'oracle.adf.RichInputComboboxListOfValues', value: 'oracle.adf.RichInputComboboxListOfValues', selected:true},
+		{label:'oracle.adf.RichTable', title:'oracle.adf.RichTable', value: 'oracle.adf.RichTable', selected:true},
+		{label:'oracle.adf.RichShowDetailItem', title:'oracle.adf.RichShowDetailItem', value: 'oracle.adf.RichShowDetailItem', selected:true},
+		{label:'oracle.adf.RichQuery', title:'oracle.adf.RichQuery', value: 'oracle.adf.RichQuery', selected:true},
+		{label:'oracle.adf.RichPoll', title:'oracle.adf.RichPoll', value: 'oracle.adf.RichPoll', selected:true},
+		{label:'oracle.adf.RichCommandButton', title:'oracle.adf.RichCommandButton', value: 'oracle.adf.RichCommandButton', selected:true},
+		{label:'oracle.adf.RichPopup', title:'oracle.adf.RichPopup', value: 'oracle.adf.RichPopup', selected:true},
+		{label:'oracle.adf.RichSelectOneChoice', title:'oracle.adf.RichSelectOneChoice', value: 'oracle.adf.RichSelectOneChoice', selected:true},
+		{label:'oracle.adf.RichCommandToolbarButton', title:'oracle.adf.RichCommandToolbarButton', value: 'oracle.adf.RichCommandToolbarButton', selected:true},
+		{label:'oracle.adf.RichInputText', title:'oracle.adf.RichInputText', value: 'oracle.adf.RichInputText', selected:true},
+		{label:'oracle.adf.RichCommandLink', title:'oracle.adf.RichCommandLink', value: 'oracle.adf.RichCommandLink', selected:true},
+		{label:'oracle.adf.RichDialog', title:'oracle.adf.RichDialog', value: 'oracle.adf.RichDialog', selected:true},
+		{label:'oracle.adf.RichTreeTable', title:'oracle.adf.RichTreeTable', value: 'oracle.adf.RichTreeTable', selected:true},
+		{label:'oracle.dss.adf.graph.Graph', title:'oracle.dss.adf.graph.Graph', value: 'oracle.dss.adf.graph.Graph', selected:true},
+		{label:'oracle.adf.RichCommandMenuItem', title:'oracle.adf.RichCommandMenuItem', value: 'oracle.adf.RichCommandMenuItem', selected:true},
+		{label:'oracle.adf.RichInputDate', title:'oracle.adf.RichInputDate', value: 'oracle.adf.RichInputDate', selected:true},
+		{label:'oracle.adf.RichInputListOfValues', title:'oracle.adf.RichInputListOfValues', value: 'oracle.adf.RichInputListOfValues', selected:true},
+		{label:'oracle.adf.RichCommandImageLink', title:'oracle.adf.RichCommandImageLink', value: 'oracle.adf.RichCommandImageLink', selected:true},
+		{label:'oracle.adf.RichSelectBooleanCheckbox', title:'oracle.adf.RichSelectBooleanCheckbox', value: 'oracle.adf.RichSelectBooleanCheckbox', selected:true},
+		{label:'oracle.adf.RichShowDetailHeader', title:'oracle.adf.RichShowDetailHeader', value: 'oracle.adf.RichShowDetailHeader', selected:true},
+		{label:'oracle.adf.RichChooseDate', title:'oracle.adf.RichChooseDate', value: 'oracle.adf.RichChooseDate', selected:true},
+		{label:'oracle.dss.adf.gantt.SchedulingGantt', title:'oracle.dss.adf.gantt.SchedulingGantt', value: 'oracle.dss.adf.gantt.SchedulingGantt', selected:true},
+		{label:'oracle.adf.RichSelectOneRadio', title:'oracle.adf.RichSelectOneRadio', value: 'oracle.adf.RichSelectOneRadio', selected:true},
+		{label:'oracle.adf.RichSelectManyChoice', title:'oracle.adf.RichSelectManyChoice', value: 'oracle.adf.RichSelectManyChoice', selected:true},
+		{label:'oracle.adf.RichCommandNavigationItem', title:'oracle.adf.RichCommandNavigationItem', value: 'oracle.adf.RichCommandNavigationItem', selected:true},
+		{label:'oracle.adf.RichShowDetail', title:'oracle.adf.RichShowDetail', value: 'oracle.adf.RichShowDetail', selected:true},
+		{label:'oracle.dss.adf.gantt.ProjectGantt', title:'oracle.dss.adf.gantt.ProjectGantt', value: 'oracle.dss.adf.gantt.ProjectGantt', selected:true},
+		{label:'oracle.adf.RichSelectBooleanRadio', title:'oracle.adf.RichSelectBooleanRadio', value: 'oracle.adf.RichSelectBooleanRadio', selected:true},
+		{label:'oracle.adf.RichPanelSplitter', title:'oracle.adf.RichPanelSplitter', value: 'oracle.adf.RichPanelSplitter', selected:true},
+		{label:'oracle.adf.RichPanelCollection', title:'oracle.adf.RichPanelCollection', value: 'oracle.adf.RichPanelCollection', selected:true},
+		{label:'oracle.adf.RichMasonryLayout', title:'oracle.adf.RichMasonryLayout', value: 'oracle.adf.RichMasonryLayout', selected:true},
+		{label:'oracle.adf.RichCommandTrainStop', title:'oracle.adf.RichCommandTrainStop', value: 'oracle.adf.RichCommandTrainStop', selected:true}
+    ];
 
     $('#rvid-filter').multiselect('dataprovider', rvidlist);    
+	$('#ctype-filter').multiselect('dataprovider', ctypelist);    
     $('#env-filter').multiselect('dataprovider', envgroups);
 
     drawgraph(); 

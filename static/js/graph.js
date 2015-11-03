@@ -81,10 +81,6 @@ function drawgraph() {
                         linkedByIndex[d.source.index + "," + d.target.index] = 1;
   });
 
-  d3.select('input').on("change", function() {
-		console.log("changed");
-                alert('Changed option ' + this + '.');
-            });
   
   function startFlow() {
 	path = path.data(force.links().filter(function(d){return d.value>0;}), function(d) { return d.source + "-" + d.target; });
@@ -217,34 +213,23 @@ function drawgraph() {
 	  console.log(filters);
 	  
 	  function filterCondition(d) {
-		  return d.prop.REGION_VIEW_ID in filters["rvid-filter"];
+		  for (var f in filters) {
+			field = window.fieldmap.get(f);
+			if (d.prop[field] in filters[f])
+				return true;
+		  }
+		  return false;
 	  }
 
 	  path.attr("visibility", function(d){
-		  /*
-		  for (var f in filter) {
-			field = window.fieldmap.get(f);
-			if (d.prop.field in filter[f])
-				return false;
-		  }
-;		  return true;
-		  */
 		  return (filterCondition(d.source)) || (filterCondition(d.target)) ? "hidden":"visible";});	
 	
 	  
 	  circle.attr("visibility", function(d){
-		  /*
-		  for (var f in filter) {
-			field = window.fieldmap.get(f);
-			if (d.prop.field in filter[f])
-				return false;
-		  }
-;		  return true;
-		  */
 		  return filterCondition(d) ? "hidden":"visible";});
-	
+
 	 clearHulls();
-	 redrawHulls();
+	 force.start();
   });
 
  });
