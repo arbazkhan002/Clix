@@ -203,3 +203,49 @@ hr.tooltip-hr {
         margin-right: 0;
     }
 }
+
+.multiselect-container > li {
+	height: 30px;
+}
+
+.multiselect-container > li > a {
+	height: inherit;
+}
+
+.multiselect-container > li > a > label {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+.collapse > .row > div {
+	margin-bottom: 10px;
+}
+.slideshow-btn {
+	position: relative;
+	margin: auto;
+	top: 5px;
+	width: 10%;
+	text-align: center;
+	color: steelblue;
+}
+
+.slideshow-search {
+	position: relative;
+	top: 5px;
+    width: 30%;
+    float: left;
+    margin-left: 40px;
+}
+
+.hide {
+ display: hidden;
+}
+
+.ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            /* prevent horizontal scrollbar */
+            overflow-x: hidden;
+            /* add padding to account for vertical scrollbar */
+            padding-right: 20px;
+} 

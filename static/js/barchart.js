@@ -1,13 +1,13 @@
 function drawchart(elementId) {
+  drawchart.elementId = elementId;	
   if ('chart' in drawchart) {
       console.log("drawchart.charted");
-      datachange(elementId);
+      datachange(drawchart.elementId, true);
       return false;
     }
 
   drawchart.chart = {};
-  console.log("drawchart.chart");
-//<label><input type="checkbox"> Sort values</label>
+  clearSVG();  
   var margin = {top: 20, right: 20, bottom: 30, left: 40};
   drawchart.chart.width = 1120 - margin.left - margin.right;
   drawchart.chart.height = 500 - margin.top - margin.bottom;
@@ -30,10 +30,6 @@ function drawchart(elementId) {
       .tickFormat(formatPercent);
 
   drawchart.chart.tooltip = Tooltip("vis-tooltip", 230)
-
-  // remove any old svg
-  d3.select("svg").remove();
-  d3.select("#svg-container").select("label").remove();
   drawchart.chart.checkbox = d3.select("#svg-container").append("label");
   drawchart.chart.checkbox.append("input")
 	.attr("id", "sort-check")
@@ -46,25 +42,40 @@ function drawchart(elementId) {
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   
-  datachange(elementId);
+  datachange(drawchart.elementId, true);
 
-  function datachange(elementId) {
-    d3.event.stopPropagation();
-    d3.json("http://10.240.176.237:5000/datachart?field="+elementId, function(error, d) {
-        var data = d.values;
+  function redrawChart(d) {
+	    var data = d.values,
+	    name = drawchart.elementId;
+	    var total = 0;
         data.forEach(function(d) {
           d.frequency = +d.frequency;
+          total += +d.frequency;
+        });
+        
+		data.forEach(function(d) {
+          d.frequency = d.frequency/total;
         });
 
-        drawchart.chart.x.domain(data.map(function(d) { return d.letter; }));
+        drawchart.chart.x.domain(data.sort(function(a, b) { return d3.ascending(a.letter, b.letter); }).map(function(d) { return d.letter; }));
         drawchart.chart.y.domain([0, d3.max(data, function(d) { return d.frequency; })]);
 
+		// remove axes
         drawchart.chart.svg.select(".y.axis").remove();
         drawchart.chart.svg.select(".x.axis").remove();
+        drawchart.chart.svg.select(".x.label").remove();    
+            
         drawchart.chart.svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + drawchart.chart.height + ")")
             .call(drawchart.chart.xAxis);
+            
+		drawchart.chart.svg.append("text")
+		.attr("class", "x label")
+		.attr("text-anchor", "end")
+		.attr("x", drawchart.chart.width/2)
+		.attr("y", drawchart.chart.height + 16)
+		.text(name+" (Top 50 results)"); 
 
         drawchart.chart.svg.append("g")
             .attr("class", "y axis")
@@ -84,7 +95,7 @@ function drawchart(elementId) {
             
         bar.exit().remove();  
 
-        bar.transition().duration(750)
+        bar.transition().duration(500)
 			.attr("x", function(d) { return drawchart.chart.x(d.letter); })
             .attr("width", drawchart.chart.x.rangeBand())
             .attr("y", function(d) { return drawchart.chart.y(d.frequency); })
@@ -92,7 +103,6 @@ function drawchart(elementId) {
 
         bar.on("mouseover", barDetails)
           .on("mouseout", hideDetails);
-
 
 		d3.select("#sort-check").property("checked", false)
 		.on("change", change);
@@ -105,35 +115,112 @@ function drawchart(elementId) {
               .map(function(d) { return d.letter; }))
               .copy();
 
-          drawchart.chart.svg.selectAll(".bar")
-              .sort(function(a, b) { return x0(a.letter) - x0(b.letter); });
-
-          var transition = drawchart.chart.svg.transition().duration(750),
-              delay = function(d, i) { return i * 5; };
-
-          transition.selectAll(".bar")
-              .delay(delay)
-              .attr("x", function(d) { return x0(d.letter); });
-
-          transition.select(".x.axis")
-              .call(drawchart.chart.xAxis)
-            .selectAll("g")
-              .delay(delay);
+		  changeAxisX(x0);
+		  filterSort();
         }
-
+        
         function barDetails(d,i) {
+		 var extra = '';	
          var content = '<p class="main">' + d.letter + '</span></p>';
+		 if (drawchart.elementId == 'CLIENT_ID')
+			extra = '<p class="extra">' + d.prop.DISPLAY_NAME + ':' + d.prop.REGION_VIEW_ID + '</span></p>';
+		 content += extra;	
          content += '<hr class="tooltip-hr">';
          content += '<p class="extra">' + Number((d.frequency*100).toFixed(2)) + '<b>&#37</b></span></p>';
-         drawchart.chart.tooltip.showTooltip(content,d3.event,d.letter.length>30?d.letter.length/30:1);
+         var dynamicWidth = Math.max(extra.length*0.6, d.letter.length)>30 ? Math.max(extra.length*0.6, d.letter.length)/30:1;
+         drawchart.chart.tooltip.showTooltip(content, d3.event, dynamicWidth);
         } 
 
        function hideDetails(d,i) {
          drawchart.chart.tooltip.hideTooltip();
        }
-    });
   }
+  
+  function datachange(e, refresh) {
+    //d3.event.stopPropagation();
+    drawchart.elementId = e;   
+	var postData = {},
+		context = 'env-filter';
+	postData.field = drawchart.elementId;
+	console.log(drawchart.elementId);
+	postData[window.fieldmap.get(context)] = filters[context];
+	
+	if (!(typeof(refresh)==='undefined'))
+		d3.xhr('/datachart')
+			.header("Content-Type", "application/json")
+			.post(
+				JSON.stringify(postData),
+				function(err, data){
+					var response = JSON.parse(data.response);
+					redrawChart(response);
+				}
+			);
+	var t = drawchart.chart.svg.transition();			
+	console.log(t);
+	var filterTimeout = setTimeout(function() {
+		filterSort();
+	}, 1000);	    
+  }
+  
+  function changeAxisX(x0) {
+	  drawchart.chart.svg.selectAll(".bar")
+		  .sort(function(a, b) { return x0(a.letter) - x0(b.letter); });
 
+	  var transition = drawchart.chart.svg.transition().duration(750),
+		  delay = function(d, i) { return i * 5; };
 
+	  transition.selectAll(".bar")
+		  .delay(delay)
+		  .attr("x", function(d) { return x0(d.letter); });
+
+	  transition.select(".x.axis")
+		  .call(drawchart.chart.xAxis)
+		.selectAll("g")
+		  .delay(delay);
+  }
+  
+  function filterSort() {
+  	  function filterCondition(d) {
+		  for (var f in filters) {
+			field = window.fieldmap.get(f);
+			//console.log(d.letter);
+			if (d.letter in filters[f])
+				return 1;
+			
+			if (d.prop!=null && d.prop[field] in filters[f])
+				return 1;
+				
+		  }
+		  return 0;
+	  }
+	  
+	  var bar = drawchart.chart.svg.selectAll(".bar");
+	  bar.attr("visibility", function(d){return filterCondition(d)?"hidden":"visible";});
+	  
+	  var data = bar.data();
+	  
+	  // push to the end if any of the chart elements belongs to filters
+	  var x0 = drawchart.chart.x.domain(data.sort(function(a,b) {
+			if (!filterCondition(a) && !filterCondition(b))
+				return d3.select("#sort-check").property("checked")? b.frequency - a.frequency:d3.ascending(a.letter, b.letter);
+			else 
+				return (filterCondition(a)-filterCondition(b))*100;
+			})
+		  .map(function(d) { return d.letter; }))
+		  .copy();
+
+	  changeAxisX(x0);        
+  }
+ 
+  function clearSVG() {	
+	  // remove any old svg
+	  d3.select("svg").remove();
+	  d3.select("#svg-container").select("label").remove();
+  }
+    
+  window.dispatch.on("filterChange", function(context, filters) {
+		context == "env-filter" ? datachange(drawchart.elementId, true) : datachange(drawchart.elementId);
+  });
+  
   return false;
 }

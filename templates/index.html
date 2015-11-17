@@ -12,9 +12,11 @@
 
 	<!-- Optional theme -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+	
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
 	<!-- Custom CSS -->
-	<link href="{{ url_for('static', filename="css/simple-sidebar.css")}}" rel="stylesheet">
+	<link href="{{ url_for('static', filename="css/core-style.css")}}" rel="stylesheet">
 
 	<style>
 		.nav-pills a{
@@ -135,8 +137,8 @@
                       <ul class="nav nav-list">
                           <li><label class="tree-toggler nav-header">User Flows<span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></label>
                               <ul class="nav nav-list tree" id="flow-list">
-                                  <li><a href="#" onclick="return drawgraphHelper()">Session by Session</a></li>
-                                  <li><a href="#">All Sessions</a></li>
+                                  <li><a href="#" onclick="return drawgraphHelper(0)">All Sessions</a></li>
+                                  <li><a href="#" onclick="return drawgraphHelper(1,1)">Session By Session</a></li>
                               </ul>
                           </li>
                           <li class="divider"></li>
@@ -156,7 +158,19 @@
         <!-- Page Content -->
         <div id="page-content-wrapper">
             <div id="svg-container">
+				<div class="slideshow hide row">
+					<div class="slideshow-search">
+						<div class="form-group form-group-sm">
+						  <input id="searchdsid" type="text" class="form-control" placeholder="Search DSID...">
+						</div><!-- /input-group -->
+					 </div><!-- /.col-lg-6 -->
+					 							
+					<div class="slideshow-btn">
+						<button class="btn btn-default" id="slideshow-btn-left"><i class="glyphicon glyphicon-triangle-left"></i></button>
+						<button class="btn btn-default" id="slideshow-btn-right"><i class="glyphicon glyphicon-triangle-right"></i></button>					
+					</div>			
             </div>
+
         </div>
         <!-- /#page-content-wrapper -->
 
@@ -165,13 +179,15 @@
 
   <!-- Bootstrap Core JavaScript -->
   <!-- Latest compiled and minified JavaScript -->
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='js/libs/bootstrap-multiselect.js')}}"></script>
   
   <script>
-	  window.dispatch = d3.dispatch("filterChange");	  
+	  window.dispatch = d3.dispatch("filterChange");
+	  window.session_count = 0;	  
   </script>
   
   <script type="text/javascript" src="{{ url_for('static', filename='js/Tooltip.js')}}"></script>  
@@ -186,21 +202,20 @@
 	var m = d3.map();
 	m.set("rvid-filter", "REGION_VIEW_ID");
 	m.set("ctype-filter", "COMPONENT_TYPE");	
+	m.set("env-filter", "ENVIRONMENT");	
 	window.fieldmap = m;
 	
 	function addFilter(f, x, context) {
 		if (!(f in filters))
 			filters[f] = {};		
 		filters[f][x] = true;
-		console.log(filters);
-		window.dispatch.filterChange(context, filters);
+		window.dispatch.filterChange(f, filters);
 	}
    
 	function clearFilter(f, x, context) {
 		if (f in filters)
-			delete filters[f][x];
-		console.log(filters);	
-		window.dispatch.filterChange(context, filters);		
+			delete filters[f][x];	
+		window.dispatch.filterChange(f, filters);		
 	}
 	
 	$(document).ready(function () {
@@ -211,42 +226,82 @@
       $(this).children('span').toggleClass('glyphicon-menu-up glyphicon-menu-down');
     });
 
-    //initialize the multiselect plugin 
-    $('select').multiselect({
+	var settings = {
 		buttonClass: 'btn btn-default',
 	    enableCollapsibleOptGroups: true,
 	    enableClickableOptGroups: true,
 		enableFiltering: true,
 	    enableCaseInsensitiveFiltering: true,
-		includeSelectAllOption: true,
 		maxHeight: 200,
 	    buttonWidth: '150px',
 	    buttonTitle: function(o, e){
 			return 'Dropdown-Filter';
 		},
+		includeSelectAllOption: true,
 	    onChange: function(element, checked) {
                 var parentId = $(element[0]).closest("select").attr('id');
                 var f = checked ? clearFilter : addFilter;
                 f(parentId,element.val(), this);
-            }	             
-    });
-
-    $('select').multiselect('selectAll', false);
+        },
+	};
+	
+	 //initialize the multiselect plugin after defining 'onSelectAll' function for each select
+    $('select').each(function(index, element){
+		var parentId = $(element).closest("select").attr('id');
+		var fullSettings = settings;
+		fullSettings.id = parentId;
+		fullSettings.onSelectAll = function(checked) {
+			var myid = this.id;
+			if (!checked)
+				$('#'+myid).parent().find('input').each(function(){
+															var f = myid;
+															var x = $(this).attr('value');
+															if (!(f in filters))
+																filters[f] = {};		
+															filters[f][x] = true;
+														});
+			else
+				delete filters[myid];
+			window.dispatch.filterChange(this, filters);		
+		};
+		$(this).multiselect(fullSettings);
+	});
     $('select').multiselect('updateButtonText');
-
+	
     var envgroups = [
       {
           label: 'Cloud', children: [
-              {label: 'AAA-Laser Technology', value: 'AAA-Laser Technology'},
-              {label: 'GPN Vinci', value: 'GPN Vinci'},
-              {label: 'HCLR Two Farms Inc.', value: 'HCLR Two Farms Inc.'}
+			{label:'EBKO-Trimble Navigation Limited (ERP)', title:'EBKO-Trimble Navigation Limited (ERP)', value: 'EBKO-Trimble Navigation Limited (ERP)'},
+			{label:'EBWG-TEST-ACI Worldwide Corp', title:'EBWG-TEST-ACI Worldwide Corp', value: 'EBWG-TEST-ACI Worldwide Corp'},
+			{label:'EBFQ-TEST-Action Hotels Limited', title:'EBFQ-TEST-Action Hotels Limited', value: 'EBFQ-TEST-Action Hotels Limited'},
+			{label:'EBPL-TEST-Flatiron Health, Inc.', title:'EBPL-TEST-Flatiron Health, Inc.', value: 'EBPL-TEST-Flatiron Health, Inc.'},
+			{label:'EBXK-TEST-ASGC HOLDING LLC', title:'EBXK-TEST-ASGC HOLDING LLC', value: 'EBXK-TEST-ASGC HOLDING LLC'},
+			{label:'EBXP-TEST-PGA OF AMERICA', title:'EBXP-TEST-PGA OF AMERICA', value: 'EBXP-TEST-PGA OF AMERICA'},
+			{label:'EBQS-The Royal London Mutual Insurance Society Limited', title:'EBQS-The Royal London Mutual Insurance Society Limited', value: 'EBQS-The Royal London Mutual Insurance Society Limited'},
+			{label:'EBGK-Trizac Holding', title:'EBGK-Trizac Holding', value: 'EBGK-Trizac Holding'},
+			{label:'EBIL-TEST-Al Khayyat Contracting & Trading', title:'EBIL-TEST-Al Khayyat Contracting & Trading', value: 'EBIL-TEST-Al Khayyat Contracting & Trading'},
+			{label:'EBDW-PRODUCTION RESOURCE GROUP', title:'EBDW-PRODUCTION RESOURCE GROUP', value: 'EBDW-PRODUCTION RESOURCE GROUP'},
+			{label:'EBOI-TEST-Boise State University', title:'EBOI-TEST-Boise State University', value: 'EBOI-TEST-Boise State University'},
+			{label:'EABU-Public Health Foundation Enterprises, Inc.', title:'EABU-Public Health Foundation Enterprises, Inc.', value: 'EABU-Public Health Foundation Enterprises, Inc.'},
+			{label:'EBEC-Boingo Wireless Inc', title:'EBEC-Boingo Wireless Inc', value: 'EBEC-Boingo Wireless Inc'},
+			{label:'EAAO-Wave Division Holdings, LLC', title:'EAAO-Wave Division Holdings, LLC', value: 'EAAO-Wave Division Holdings, LLC'},
+			{label:'EBLA-Beijing Emirates International Construction', title:'EBLA-Beijing Emirates International Construction', value: 'EBLA-Beijing Emirates International Construction'},
+			{label:'EBVZ-TEST-Project Partners, LLC', title:'EBVZ-TEST-Project Partners, LLC', value: 'EBVZ-TEST-Project Partners, LLC'},
+			{label:'EBQZ-TEST-Ghantoot Transport and General Contracting LLC', title:'EBQZ-TEST-Ghantoot Transport and General Contracting LLC', value: 'EBQZ-TEST-Ghantoot Transport and General Contracting LLC'},
+			{label:'EBKS-BAY SHIP & YACHT CO', title:'EBKS-BAY SHIP & YACHT CO', value: 'EBKS-BAY SHIP & YACHT CO'},
+			{label:'EBSX-Rightside Group, Ltd.', title:'EBSX-Rightside Group, Ltd.', value: 'EBSX-Rightside Group, Ltd.'},
+			{label:'EBJJ-Transit Wireless, LLC', title:'EBJJ-Transit Wireless, LLC', value: 'EBJJ-Transit Wireless, LLC'},
+			{label:'EBEP-Sunil Gupta MD LLC', title:'EBEP-Sunil Gupta MD LLC', value: 'EBEP-Sunil Gupta MD LLC'},
+			{label:'EABS-Cleversys', title:'EABS-Cleversys', value: 'EABS-Cleversys'},
+			{label:'EAAMDEV3-TEST-dunnhumby ltd', title:'EAAMDEV3-TEST-dunnhumby ltd', value: 'EAAMDEV3-TEST-dunnhumby ltd'},
+			{label:'EAAMDEV1-TEST-dunnhumby ltd', title:'EAAMDEV1-TEST-dunnhumby ltd', value: 'EAAMDEV1-TEST-dunnhumby ltd'},
+			{label:'EBKO-DEV1-Trimble Navigation Limited (ERP)', title:'EBKO-DEV1-Trimble Navigation Limited (ERP)', value: 'EBKO-DEV1-Trimble Navigation Limited (ERP)'},
+			{label:'EBWF-TEST-Photon Infotech Inc (ERP)', title:'EBWF-TEST-Photon Infotech Inc (ERP)', value: 'EBWF-TEST-Photon Infotech Inc (ERP)'}
           ]
       },
       {
           label: 'Rel 11', children: [
-              {label: 'REL11_ST9_Upgraded_CDRM', value: 'REL11_ST9_Upgraded_CDRM'},
-              {label: 'REL11_ST11_Upgraded_CDRM', value: 'REL11_ST11_Upgraded_CDRM'},
-              {label: 'REL11_ST12_Upgraded_CDRM', value: 'REL11_ST12_Upgraded_CDRM', selected: true}
+              {label: 'REL11_ST9_Upgraded_CDRM', value: 'REL11_ST9_Upgraded_CDRM', selected: true}
           ]
       }
     ];
@@ -408,14 +463,110 @@
     $('#rvid-filter').multiselect('dataprovider', rvidlist);    
 	$('#ctype-filter').multiselect('dataprovider', ctypelist);    
     $('#env-filter').multiselect('dataprovider', envgroups);
+    //$('#env-filter').multiselect('disable');
+    $('.input-group').addClass('input-group-sm');
+    
+    //populate select filters based on whether selected or not
+    $("select option:not([selected])").each(function(index, element) {
+															var f = $(element).closest("select").attr('id');
+															var x = $(this).attr('value');
+															if (!(f in filters))
+																filters[f] = {};		
+															filters[f][x] = true;
+											});
+    
+    
+    drawgraph(0); 
+    $("#chart-list a").on("click", function() {
+		// hide slideshow buttons (required if the current action is 'session by session' from 'User Flows')
+		$(".slideshow").addClass("hide");
+		drawchart(d3.select(this).attr("value"));
+	}); 
+	   
+	$("#slideshow-btn-left").on("click", function() {window.session_count==1? drawgraphHelper(1,0):drawgraphHelper(1,-1);});
+	$("#slideshow-btn-right").on("click", function() {drawgraphHelper(1,1)});
+	
+	// Autocomplete Documentation: http://api.jqueryui.com/autocomplete/#option-source
+	$('#searchdsid').autocomplete({
+		source: function(request, response){
+				 request[window.fieldmap.get('env-filter')] = filters['env-filter'];
+				 //Ajax documentation: http://api.jquery.com/jquery.ajax/
+				 $.ajax({
+					url: '{{ url_for("searchdsid") }}',
+					data: JSON.stringify(request),
+					method: "POST",
+					contentType: 'application/json;charset=UTF-8'
+					}).done(function (data) {
+						response(data.json_list);
+						
+						//unbind all previous click bindings
+						$("#dsid-submit").unbind( "click" );
+						
+						//bind new behavior
+						var inputdata = $("#searchdsid").val();
+						if (data.json_list.length <= 0) {
+							$("#searchdsid").closest(".form-group").removeClass('has-success');
+							$("#searchdsid").closest(".form-group").removeClass('has-feedback');
+							$("#searchdsid").siblings("span").remove();							
+							$("#searchdsid").closest(".form-group").addClass('has-error');
+							$("#searchdsid").closest(".form-group").addClass('has-feedback');
+							$("#searchdsid").closest(".form-group").append('<span class="glyphicon glyphicon-remove form-control-feedback"></span>')
+							console.log(inputdata);
+							console.log(data.json_list);
+						}
+						else if (data.json_list.length == 1) {
+							$("#searchdsid").closest(".form-group").removeClass('has-error');
+							$("#searchdsid").closest(".form-group").removeClass('has-feedback');
+							$("#searchdsid").siblings("span").remove();							
+							$("#searchdsid").closest(".form-group").addClass('has-success');
+							$("#searchdsid").closest(".form-group").addClass('has-feedback');
+							$("#searchdsid").closest(".form-group").append('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+							setTimeout(function(){
+									$("#searchdsid").closest(".form-group").removeClass('has-success');
+									$("#searchdsid").closest(".form-group").removeClass('has-feedback');
+									$("#searchdsid").siblings("span").remove();
+								}, 5000);
+							console.log(inputdata);
+							console.log(data.json_list[0]);
+							drawgraph(1, data.json_list[0]);
+						}
+					});
+			},
+		minLength: 2,
+		select: function(event, ui) {
+				$("#searchdsid").closest(".form-group").removeClass('has-error');
+				$("#searchdsid").closest(".form-group").removeClass('has-feedback');
+				$("#searchdsid").siblings("span").remove();
+				$("#searchdsid").closest(".form-group").addClass('has-success');
+				$("#searchdsid").closest(".form-group").addClass('has-feedback');
+				$("#searchdsid").closest(".form-group").append('<span class="glyphicon glyphicon-ok form-control-feedback"></span>')
+				setTimeout(function(){
+									$("#searchdsid").closest(".form-group").removeClass('has-success');
+									$("#searchdsid").closest(".form-group").removeClass('has-feedback');
+									$("#searchdsid").siblings("span").remove();
+								}, 2000);		 
+				console.log(ui.item.label);
+				drawgraph(1, ui.item.label);
+			}
+	});
 
-    drawgraph(); 
-    d3.select("#chart-list").selectAll("a").on("click", function() {drawchart(d3.select(this).attr("value"));});    
+	
   });
 
-   function drawgraphHelper(){
+	// drawgraph in all(x=0) or per session mode (x=1)
+	// y determines whether to go forward (y=1) or back(y=-1) in per session mode	
+   function drawgraphHelper(x,y) {
 	delete drawchart.chart;
-	drawgraph();
+	if (x==0) {
+		window.session_count = 0;
+		$(".slideshow").addClass("hide");
+	}
+	else {
+		$(".slideshow").removeClass("hide");
+		window.session_count = window.session_count+y;
+	}
+	
+	drawgraph(window.session_count);
 	return false; //override default behavior
    }
      
